@@ -134,3 +134,4 @@ protocol.json
 tx.raw
 tx.signed
 tx.tmp
+logs/
