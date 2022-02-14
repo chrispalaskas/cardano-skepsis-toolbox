@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Other project specific files
+config_christos.json
+protocol.json
+tx.raw
+tx.signed
+tx.tmp
