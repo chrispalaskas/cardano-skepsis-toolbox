@@ -1,5 +1,6 @@
+from multiprocessing import pool
 import requests
-import json
+import json, collections
 import shutil
 from os.path import exists
 import cardano_cli_helper as cli
@@ -61,8 +62,10 @@ def appendLogJson(logfile: str, data: dict):
         newDict = data
     else:
         newDict = {**old_data, **data}
+    reverseNewDict = collections.OrderedDict(reversed(newDict.items())) # if you want reversed sorted
     with open(logfile, 'w') as jsonlog:
-        json.dump(newDict, jsonlog, indent=4)
+        json.dump(reverseNewDict, jsonlog, indent=4, sort_keys=False)
+        print('Log appended')
 
 
 def parseConfigSendAssets(configFile, stakeAddressesOfRecipients, recipientList):
@@ -77,6 +80,7 @@ def parseConfigSendAssets(configFile, stakeAddressesOfRecipients, recipientList)
             noOfTokensToSend = config['noOfTokensToSend']
             minADAToSendWithToken = config['minADAToSendWithToken']
             sentTokensLogFile = config['sentTokensLogFile']
+            delegatorsLogFile = config['delegatorsLogFile']
             minFee = config['minFee']
             blockfrostURL = config['blockFrostURL']
             blockFrostProjID = config['blockFrostProjID']
@@ -88,6 +92,7 @@ def parseConfigSendAssets(configFile, stakeAddressesOfRecipients, recipientList)
                    myPaymentAddrSignKeyFile, \
                    tokenPolicyID, \
                    sentTokensLogFile, \
+                   delegatorsLogFile, \
                    minFee, \
                    finRecipientObjList
     except:
@@ -104,11 +109,13 @@ def parseConfigMonitorAddr(configFile):
             myPaymentAddrSignKeyFile = config['myPaymentAddrSignKeyFile']
             tokenPolicyID = config['tokenPolicyID']
             tokenPriceLovelace = config['tokenPriceLovelace']
+            stakingTokenRatio = config['stakingTokenRatio']
             minADAToSendWithToken = config['minADAToSendWithToken']
             minFee = config['minFee']
             incomingTxhashLogFile = config['incomingTxhashLogFile']
             sentTxhashLogFile = config['sentTxhashLogFile']
             sentTokensLogFile = config['sentTokensLogFile']
+            delegatorsLogFile = config['delegatorsLogFile']
             blockFrostURL = config['blockFrostURL']
             blockFrostProjID = config['blockFrostProjID']
             print('Config file parsed succesfully!')
@@ -116,11 +123,13 @@ def parseConfigMonitorAddr(configFile):
                    myPaymentAddrSignKeyFile, \
                    tokenPolicyID, \
                    tokenPriceLovelace, \
+                   stakingTokenRatio, \
                    minADAToSendWithToken, \
                    minFee, \
                    incomingTxhashLogFile, \
                    sentTxhashLogFile, \
                    sentTokensLogFile, \
+                   delegatorsLogFile, \
                    blockFrostURL, \
                    blockFrostProjID
     except:
@@ -128,9 +137,78 @@ def parseConfigMonitorAddr(configFile):
         return False
 
 
-def calculateTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace):
+def parseConfigGetDelegators(configFile):
+    try:
+        with open(configFile, 'r') as jsonConfig:
+            print('Opened config file...')
+            config = json.load(jsonConfig)
+            delegatorsLogFile = config['delegatorsLogFile']
+            blockFrostURL = config['blockFrostURL']
+            blockFrostProjID = config['blockFrostProjID']
+            poolID = config['poolID']
+            print('Config file parsed succesfully!')
+            return delegatorsLogFile, \
+                   blockFrostURL, \
+                   blockFrostProjID, \
+                   poolID
+    except:
+        print('Configuration file misformated or does not exist.')
+        return False
+
+
+def calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace):
+    # Calculates how many tokens to send when selling them at a specific price
     tokens_to_send = int((lovelace_received - minADAToSendWithToken - minFee) / tokenPriceLovelace)
     if tokens_to_send<0:
         tokens_to_send = 0
     lovelace_amount_to_refund = lovelace_received - (tokens_to_send * tokenPriceLovelace) - minFee    
     return tokens_to_send, lovelace_amount_to_refund
+
+
+def calculateEarnedTokensToSend(lovelace_received, minADAToSendWithToken, minFee, totalStakedAmount, stakingTokenRatio):
+    # Calculates how many tokens to send for a specific delegator
+    tokens_to_send = round(totalStakedAmount * stakingTokenRatio)
+    lovelace_amount_to_refund = minADAToSendWithToken
+    # Sanity Check
+    if lovelace_received < minADAToSendWithToken + minFee:
+        tokens_to_send = 0
+        lovelace_amount_to_refund = lovelace_received - minFee
+    return tokens_to_send, lovelace_amount_to_refund
+
+
+def getDelegators(pool_id, blockfrostURL: str, apiKey: str):
+    # Get list of delegators from a Pool
+    requestString = blockfrostURL + 'pools/' + pool_id + '/delegators'
+    print (requestString)
+    delegatorsList = getBlockfrostAPIData(requestString, apiKey)
+    delegators = {}
+    try:
+        for deleg in delegatorsList:
+            delegators[deleg['address']] = int(deleg['live_stake'])
+    except:
+        print('Error: Not a proper JSON return.')
+    return delegators
+
+
+def getCurrentEpoch(blockfrostURL: str, apiKey: str):
+    # Get current epoch
+    requestString = blockfrostURL + 'epochs/latest'
+    data = getBlockfrostAPIData(requestString, apiKey)
+    epoch = 0
+    try:
+        epoch = data['epoch']
+    except:
+        print('Error: Not a proper JSON return.')
+    return epoch
+
+
+def getStakeFromAddress(paymentAddr: str, blockfrostURL: str, apiKey: str):
+    # Get Staking address of payment address
+    requestString = blockfrostURL + 'addresses/' + paymentAddr
+    data = getBlockfrostAPIData(requestString, apiKey)
+    try:
+        stakeAddr = data['stake_address']
+        return stakeAddr
+    except:
+        print('Error: could not find stake_address key in response')
+        return False

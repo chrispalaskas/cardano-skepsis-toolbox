@@ -9,6 +9,7 @@ Created on Wed Jan 26 15:40:30 2022
 import cardano_cli_helper as cli
 import helper
 from datetime import datetime
+import json
 
 
 # List of addresses you want to send to
@@ -28,9 +29,12 @@ def main(finRecipientObjList,
         myPaymentAddrSignKeyFile,
         tokenPolicyID,
         sentTokensLogFile,
+        delegatorsLogFile,
         minFee):
     with open(myPaymentAddrFile) as file:
         paymentAddr = file.read()
+    with open(delegatorsLogFile, 'r') as jsonlog:
+        delegatorsDict = json.load(jsonlog)
     cli.getProtocolJson() # Checks if it already exists, if not gets a new copy
 
     # Get your payment address TxHashes
@@ -40,6 +44,7 @@ def main(finRecipientObjList,
     allTxInList = utxos.keys() # Use this as tx_In to consolidate all addresses
     myTxHash = cli.getTxInWithLargestTokenAmount(utxos, tokenPolicyID)
     tokensDict = cli.getTokenListFromTxHash(utxos)
+    foreignTokensDict = cli.getForeignTokensFromTokenList(tokensDict, tokenPolicyID)
     if 'ADA' in tokensDict.keys():
         myInitLovelace = tokensDict['ADA']
     else:
@@ -55,7 +60,7 @@ def main(finRecipientObjList,
 
     # Send noOfTokens to all your recipients with one Tx
     result = cli.sendTokenToAddr(myPaymentAddrSignKeyFile, allTxInList, myInitLovelace, myInitToken, paymentAddr,
-                                 finRecipientObjList, tokenPolicyID, minFee) 
+                                 finRecipientObjList, tokenPolicyID, minFee, foreignTokensDict)
     if result == -1:
         print ('Error: Tokens could not be sent.')
         return False
@@ -67,11 +72,18 @@ def main(finRecipientObjList,
         latest_tx = {current_time:{}}
         for recipient in finRecipientObjList:
             latest_tx[current_time][recipient.address] = {}
+            latest_tx[current_time][recipient.address]['Stake Addr'] = recipient.stake_address
             latest_tx[current_time][recipient.address]['ADA Received'] = '%.3f'%(recipient.lovelace_amount_received/1000000)
             latest_tx[current_time][recipient.address]['ADA Sent'] = '%.3f'%(recipient.lovelace_amount_to_send/1000000)
             latest_tx[current_time][recipient.address]['Tokens Sent'] = recipient.token_amount_to_send
+            # Zero the sum of the total stake for addresses succesfully sent
+            try:
+                delegatorsDict['sum'][recipient.stake_address] = 0
+            except:
+                print('Delegator stake address not found.')
         helper.appendLogJson(sentTokensLogFile, latest_tx)
-        print('Log appended')
+        with open(delegatorsLogFile, 'w') as jsonlog:
+            json.dump(delegatorsDict, jsonlog, indent=4, sort_keys=False)
         return True
     else:
         return False
@@ -84,6 +96,7 @@ if __name__ == '__main__':
     myPaymentAddrSignKeyFile, \
     tokenPolicyID, \
     sentTokensLogFile, \
+    delegatorsLogFile, \
     minFee, \
     finRecipientObjList = helper.parseConfigSendAssets(configFile, StakeAddressesOfRecipients, RecipientList)
 
@@ -93,6 +106,7 @@ if __name__ == '__main__':
              myPaymentAddrSignKeyFile,
              tokenPolicyID,
              sentTokensLogFile,
+             delegatorsLogFile,
              minFee)
     else:
         print('Empty list of recipients received.')

@@ -8,12 +8,14 @@ import select
 
 class Recipient:
     address = str
+    stake_address = str
     lovelace_amount_received = int
     lovelace_amount_to_send = int
     token_amount_to_send = int
 
-    def __init__(self, addr, lovelace_in, lovelace_out, tokens_out):
+    def __init__(self, addr, stake_addr, lovelace_in, lovelace_out, tokens_out):
         self.address = addr
+        self.stake_address = stake_addr
         self.lovelace_amount_received = lovelace_in
         self.lovelace_amount_to_send = lovelace_out
         self.token_amount_to_send = tokens_out
@@ -84,6 +86,14 @@ def getTokenListFromTxHash(utxosJson):
     return tokensDict
 
 
+def getForeignTokensFromTokenList(tokensDict: dict, tokenPolicyID: str):
+    print('Getting list of foreign tokens received with amounts...')
+    foreignTokensDict = tokensDict.copy()
+    foreignTokensDict.pop('ADA', None)
+    foreignTokensDict.pop(tokenPolicyID, None)
+    return foreignTokensDict
+
+
 def getProtocolJson():
     if not exists('protocol.json'):
         print('Getting protocol.json...')
@@ -132,7 +142,7 @@ def getDraftTX(txInList, returnAddr, recipientList, ttlSlot):
     return
     
 
-def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId):
+def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict):
     print('Creating tx.raw...')
     lovelace_received = 0
     lovelace_to_send = 0
@@ -157,8 +167,10 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSl
         command += f'--tx-in {txIn} '
     for recipient in recipientList:
         command += f'--tx-out {recipient.address}+{recipient.lovelace_amount_to_send}+"{recipient.token_amount_to_send} {tokenPolicyId}" ' 
-    command += f'--tx-out {returnAddr}+{lovelace_to_return}+"{tokens_to_return} {tokenPolicyId}" '
-    command += f'--invalid-hereafter {ttlSlot} \
+    command += f'--tx-out {returnAddr}+{lovelace_to_return}+"{tokens_to_return} {tokenPolicyId}"'
+    for key in foreignTokensDict: # Send all other incoming tokens too
+        command += f'+"{foreignTokensDict[key]} {key}"'
+    command += f' --invalid-hereafter {ttlSlot} \
                  --out-file tx.raw'
     getCardanoCliValue(command, '')
 
@@ -179,16 +191,16 @@ def submitSignedTx():
     return getCardanoCliValue(command, '')
 
 
-def sendTokenToAddr(myPaymentAddrSignKeyFile, txInList, initLovelace, initToken, 
-                    fromAddr, recipientList, tokenPolicyId, minFee):
+def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace: int, initToken: int,
+                    fromAddr: str, recipientList: list, tokenPolicyId: str, minFee: int, foreignTokensDict: dict):
     ttlSlot = getCurrentSlot() + 2000
     print('TTL Slot:', ttlSlot)
     getDraftTX(txInList, fromAddr, recipientList, ttlSlot)
     fee = getMinFee(len(txInList), len(recipientList))
     print ('Min fee:', fee)
-    getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId)
+    getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
     signTx(myPaymentAddrSignKeyFile)
-    return submitSignedTx()
+    # return submitSignedTx()
 
 
 def getCnodeJournal(paymentAddr, tokenPolicyId, myTxHash):
@@ -216,4 +228,4 @@ def getCnodeJournal(paymentAddr, tokenPolicyId, myTxHash):
                     print ('Trasnaction succesfully recorded on blockchain in ', timediff, ' after ', blocksCnt, ' blocks.')
                     return True
                 print ('Waiting for the next block to include the transaction...')
-                print ('Ctrl-C to exit. Will NOT cancel the transaction.')
+                print ('Ctrl-C to exit. Will NOT cancel the transaction but will skip logging of completion.')

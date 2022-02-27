@@ -6,10 +6,11 @@ from os.path import exists
 import os
 import json
 
+import cardano_cli_helper as cli
 
 def readConfigFile():
     try:
-        with open('./config_christos.json', 'r') as jsonConfig:
+        with open('./config.json', 'r') as jsonConfig:
             print('Opened config file...')
             config = json.load(jsonConfig)
             blockFrostURL = config['blockFrostURL']
@@ -19,13 +20,31 @@ def readConfigFile():
         print('Configuration file misformated or does not exist.')
         return '', ''
 
-blockFrostURL, blockFrostProjID = readConfigFile()
+
+class TestGetStakeFromAddress(unittest.TestCase):
+
+    def test_get_stake_from_address(self):
+        # a = cli.Recipient('asdfsadfsdafdsa', 'stake1u8wsm38q7axhqswt45wdlsqd3r0n5spjht3qzrgj6u3ss4slthexn', 100, 10, 1)
+        # delegatorsLogFile = '/home/christo/Documents/cardano-skepsis-toolbox/logs/delegators_stake_log.json'
+        # with open(delegatorsLogFile, 'r') as jsonData:
+        #     delegatorsDict = json.load(jsonData)
+        # delegatorsDict['sum'][a.stake_address] = 0
+        # with open(delegatorsLogFile, 'w') as jsonlog:
+        #     json.dump(delegatorsDict, jsonlog, indent=4, sort_keys=False)
+        my_stake_addr = 'stake1u8wsm38q7axhqswt45wdlsqd3r0n5spjht3qzrgj6u3ss4slthexn'
+        my_payment_addr = 'addr1qx5trqazps96kt7539ye9cs65nu7kww0ttlgk7u8g3eadrkaphzwpa6dwpquhtgumlqqmzxl8fqr9whzqyx394erpptqq4rdxh'
+        returned_stake_addr = helper.getStakeFromAddress(my_payment_addr, blockFrostURL, blockFrostProjID)
+        self.assertEqual(my_stake_addr, returned_stake_addr)
+
 
 class TestAppendLogJson(unittest.TestCase):
 
     def test_new_log_creation(self):
+        test_dir = os.path.expanduser('~/skepsis_toolbox_test')
+        if not exists(test_dir):
+            os.mkdir(test_dir)
         testDict = {'test': 'nada'}
-        testFilePath = '/home/christo/Documents/scripts/sendAssetsToRecipients/logtest.json'
+        testFilePath = os.path.join(test_dir,'logtest.json')
         if exists(testFilePath):
             os.remove(testFilePath) 
         helper.appendLogJson(testFilePath,testDict)
@@ -33,13 +52,17 @@ class TestAppendLogJson(unittest.TestCase):
             old_data = json.load(logfile)
         self.assertEqual(testDict, old_data)
         os.remove(testFilePath)
+        os.rmdir(test_dir)
 
 
     def test_append_log(self):
+        test_dir = os.path.expanduser('~/temp')
+        if not exists(test_dir):
+            os.mkdir(test_dir)
         testDict1 = {'test': 'nada'}
         testDict2 = {'foo': 'bar'}
         testDictAppended = { 'test': 'nada', 'foo': 'bar'}
-        testFilePath = '/home/christo/Documents/scripts/sendAssetsToRecipients/logtest.json'
+        testFilePath = os.path.join(test_dir,'logtest.json')
         if exists(testFilePath):
             os.remove(testFilePath) 
         helper.appendLogJson(testFilePath,testDict1)
@@ -48,6 +71,7 @@ class TestAppendLogJson(unittest.TestCase):
             old_data = json.load(logfile)
         self.assertEqual(testDictAppended, old_data)
         os.remove(testFilePath)
+        os.rmdir(test_dir)
         
 
 class TestGetRecipientsFromStakeAddr(unittest.TestCase):
@@ -91,58 +115,100 @@ class TestGetSenderAddressFromTxHash(unittest.TestCase):
 
 class TestCalculateTokensToSend(unittest.TestCase):
     minADAToSendWithToken = 1444443
-    minFee = 180000
+    minFee = 200000
+
+
     def test_calculate_refund_all(self):
         lovelace_received = 2000000
-        tokenPriceLovelace = 3000000
+        tokenPriceLovelace = 1800000
         tokens_to_send, lovelace_amount_to_refund = \
-            helper.calculateTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
+            helper.calculateSoldTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
         self.assertEqual(tokens_to_send, 0)
         self.assertEqual(lovelace_amount_to_refund, lovelace_received - self.minFee)
+
 
     def test_calculate_send_one(self):
         lovelace_received = 3000000 + self.minADAToSendWithToken + self.minFee
         tokenPriceLovelace = 3000000
         tokens_to_send, lovelace_amount_to_refund = \
-            helper.calculateTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
+            helper.calculateSoldTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
         self.assertEqual(tokens_to_send, 1)
         self.assertEqual(lovelace_amount_to_refund, self.minADAToSendWithToken)
+
 
     def test_calculate_send_one_cheap(self):
         lovelace_received = 10 + self.minADAToSendWithToken + self.minFee
         tokenPriceLovelace = 10
         tokens_to_send, lovelace_amount_to_refund = \
-            helper.calculateTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
+            helper.calculateSoldTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
         self.assertEqual(tokens_to_send, 1)
         self.assertEqual(lovelace_amount_to_refund, self.minADAToSendWithToken)
+
 
     def test_calculate_send_many_cheap(self):
         lovelace_received = 3000000 + self.minADAToSendWithToken + self.minFee
         tokenPriceLovelace = 10
         tokens_to_send, lovelace_amount_to_refund = \
-            helper.calculateTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
+            helper.calculateSoldTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
         self.assertEqual(tokens_to_send, 300000)
         self.assertEqual(lovelace_amount_to_refund, self.minADAToSendWithToken)
+
 
     def test_calculate_send_many_cheap_with_refund(self):
         lovelace_received = 3000005 + self.minADAToSendWithToken + self.minFee
         tokenPriceLovelace = 10
         tokens_to_send, lovelace_amount_to_refund = \
-            helper.calculateTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
+            helper.calculateSoldTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
         self.assertEqual(tokens_to_send, 300000)
         self.assertEqual(lovelace_amount_to_refund, self.minADAToSendWithToken + 5)
+
 
     def test_calculate_insufficient_funds(self):
         lovelace_received = 1400000
         tokenPriceLovelace = 10
         tokens_to_send, lovelace_amount_to_refund = \
-            helper.calculateTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
+            helper.calculateSoldTokensToSend(lovelace_received, self.minADAToSendWithToken, self.minFee, tokenPriceLovelace)
         self.assertEqual(tokens_to_send, 0)
         self.assertEqual(lovelace_amount_to_refund, lovelace_received - self.minFee)
         
+
+class TestCalculateEarnedTokensToSend(unittest.TestCase):
+    minADAToSendWithToken = 1444443
+    minFee = 200000
+    stakingTokenRatio = 0.0000001
+    def test_normal_case(self):
+        tokens_to_send, lovelace_to_refund = \
+            helper.calculateEarnedTokensToSend(2000000, self.minADAToSendWithToken, self.minFee, 10000000000, self.stakingTokenRatio)
+        self.assertEqual(tokens_to_send, 1000)
+        self.assertEqual(lovelace_to_refund, self.minADAToSendWithToken)
+
+
+    def test_received_more(self):
+        tokens_to_send, lovelace_to_refund = \
+            helper.calculateEarnedTokensToSend(3000000, self.minADAToSendWithToken, self.minFee, 10000000000, self.stakingTokenRatio)
+        self.assertEqual(tokens_to_send, 1000)
+        self.assertEqual(lovelace_to_refund, self.minADAToSendWithToken)
+
+
+    def test_exactly_the_fees(self):
+        tokens_to_send, lovelace_to_refund = \
+            helper.calculateEarnedTokensToSend(1444443+self.minFee, self.minADAToSendWithToken, self.minFee, 10000000000, self.stakingTokenRatio)
+        self.assertEqual(tokens_to_send, 1000)
+        self.assertEqual(lovelace_to_refund, self.minADAToSendWithToken)
+
+
+    def test_less_than_the_fees(self):
+        amount_received = self.minADAToSendWithToken + self.minFee - 1
+        tokens_to_send, lovelace_to_refund = \
+            helper.calculateEarnedTokensToSend(amount_received, self.minADAToSendWithToken, self.minFee, 10000000000, self.stakingTokenRatio)
+        self.assertEqual(tokens_to_send, 0)
+        self.assertEqual(lovelace_to_refund, amount_received - self.minFee)
+
+
 def main() -> int:
     return 0
 
 if __name__ == '__main__':
     print('Running some tests to verify validity of my helper functions.')
+    blockFrostURL, blockFrostProjID = readConfigFile()
     unittest.main()

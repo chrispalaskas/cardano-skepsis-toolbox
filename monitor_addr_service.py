@@ -12,11 +12,13 @@ def main(myPaymentAddrFile,
          myPaymentAddrSignKeyFile,
          tokenPolicyID,
          tokenPriceLovelace,
+         stakingTokenRatio,
          minADAToSendWithToken,
          minFee,
          incomingTxhashLogFile,
          sentTxhashLogFile,
          sentTokensLogFile,
+         delegatorsLogFile,
          blockFrostURL,
          blockFrostProjID):
     sent_utxos_set = set([])
@@ -31,6 +33,14 @@ def main(myPaymentAddrFile,
         except:
             print('Logfile misformated. Backing up and starting new.')
             os.rename(sentTxhashLogFile, sentTxhashLogFile + '.bk')
+
+    if exists(delegatorsLogFile):
+        try:
+            with open(delegatorsLogFile, 'r') as jsonData:
+                delegatorsDict = json.load(jsonData)
+        except:
+            print('Delegators list file misformated.')
+            return -1
 
     tokenRecipientList = [] # List of class Recipient objects (address, ada amount received, ada refund amount, tokens to send)
 
@@ -60,6 +70,7 @@ def main(myPaymentAddrFile,
         diff_utxos = new_utxos_set.difference(sent_utxos_set)
         
         for new_utxo in diff_utxos:
+            print('New Utxo: ', new_utxo)
             address_received = helper.getSenderAddressFromTxHash(new_utxo, blockFrostURL, blockFrostProjID)
             if not address_received:
                 continue
@@ -74,16 +85,26 @@ def main(myPaymentAddrFile,
                 sent_utxos_set.add(new_utxo)
                 continue
             print('Amount received:', lovelace_received)
-            tokens_to_send, lovelace_amount_to_refund = helper.calculateTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
-            print('Tokens to send: ', tokens_to_send)
-            print('Lovelace amount to refund: ', lovelace_amount_to_refund)
-            tokenRecipientList.append(cli.Recipient(address_received, lovelace_received, 
+            # tokens_to_send, lovelace_amount_to_refund = helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
+            stakeAddrRecipient = helper.getStakeFromAddress(address_received, blockFrostURL, blockFrostProjID)
+            if lovelace_received >= tokenPriceLovelace and stakeAddrRecipient in delegatorsDict['sum']:
+                tokens_to_send, lovelace_amount_to_refund = \
+                    helper.calculateEarnedTokensToSend(lovelace_received, minADAToSendWithToken, minFee,
+                                                       delegatorsDict['sum'][stakeAddrRecipient], stakingTokenRatio)
+                print('Tokens to send: ', tokens_to_send)
+                print('Lovelace amount to refund: ', lovelace_amount_to_refund)
+            else:
+                tokens_to_send, lovelace_amount_to_refund = \
+                    helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
+                print('Amount received not enough. Issuing refund...')
+            tokenRecipientList.append(cli.Recipient(address_received, stakeAddrRecipient, lovelace_received,
                                                     lovelace_amount_to_refund, tokens_to_send))
         if sendAssets.main(tokenRecipientList,
                            myPaymentAddrFile,
                            myPaymentAddrSignKeyFile,
                            tokenPolicyID,
                            sentTokensLogFile,
+                           delegatorsLogFile,
                            minFee):
             for new_utxo in diff_utxos:
                 sent_utxos_set.add(new_utxo)
@@ -99,11 +120,13 @@ if __name__ == '__main__':
     myPaymentAddrSignKeyFile, \
     tokenPolicyID, \
     tokenPriceLovelace, \
+    stakingTokenRatio, \
     minADAToSendWithToken, \
     minFee, \
     incomingTxhashLogFile, \
     sentTxhashLogFile, \
     sentTokensLogFile, \
+    delegatorsLogFile, \
     blockFrostURL, \
     blockFrostProjID = helper.parseConfigMonitorAddr(configFile)
 
@@ -111,10 +134,12 @@ if __name__ == '__main__':
          myPaymentAddrSignKeyFile,
          tokenPolicyID,
          tokenPriceLovelace,
+         stakingTokenRatio,
          minADAToSendWithToken,
          minFee,
          incomingTxhashLogFile,
          sentTxhashLogFile,
          sentTokensLogFile,
+         delegatorsLogFile,
          blockFrostURL,
          blockFrostProjID)

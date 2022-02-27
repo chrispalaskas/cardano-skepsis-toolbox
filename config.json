@@ -3,12 +3,15 @@
     "myPaymentAddrSignKeyFile": "PATH_TO/payment.skey",
     "tokenPolicyID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.XXXXXXXXXX",
     "tokenPriceLovelace": 3000000,
+    "stakingTokenRatio": 0.0000001,
     "minADAToSendWithToken": 1444443,    
     "noOfTokensToSend": 1,
     "minFee": 180000,
     "incomingTxhashLogFile": "PATH_TO/incoming_txhash_log.json",
     "sentTxhashLogFile": "PATH_TO/sent_txhash_log.json",
     "sentTokensLogFile": "PATH_TO/sent_tokens_log_file.json",
+    "delegatorsLogFile": "PATH_TO/delegators_stake_log.json",
     "blockFrostURL": "https://cardano-mainnet.blockfrost.io/api/v0/",
-    "blockFrostProjID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+    "blockFrostProjID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "poolID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 }
