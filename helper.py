@@ -146,10 +146,12 @@ def parseConfigGetDelegators(configFile):
             blockFrostURL = config['blockFrostURL']
             blockFrostProjID = config['blockFrostProjID']
             poolID = config['poolID']
+            koiosURL = config['koiosURL']
             print('Config file parsed succesfully!')
             return delegatorsLogFile, \
                    blockFrostURL, \
                    blockFrostProjID, \
+                   koiosURL, \
                    poolID
     except:
         print('Configuration file misformated or does not exist.')
@@ -176,7 +178,7 @@ def calculateEarnedTokensToSend(lovelace_received, minADAToSendWithToken, minFee
     return tokens_to_send, lovelace_amount_to_refund
 
 
-def getDelegators(pool_id, blockfrostURL: str, apiKey: str):
+def getDelegatorsBlockfrost(pool_id, blockfrostURL: str, apiKey: str):
     # Get list of delegators from a Pool
     requestString = blockfrostURL + 'pools/' + pool_id + '/delegators'
     print (requestString)
@@ -185,6 +187,35 @@ def getDelegators(pool_id, blockfrostURL: str, apiKey: str):
     try:
         for deleg in delegatorsList:
             delegators[deleg['address']] = int(deleg['live_stake'])
+    except:
+        print('Error: Not a proper JSON return.')
+    return delegators
+
+
+
+def getDelegatorsKoios(pool_id, URL: str, epoch: int):
+    # Get list of delegators from a Pool
+    requestString = URL + 'pool_delegators'
+    params = {"_pool_bech32":pool_id, "_epoch_no": str(epoch)}
+
+    print ('requestString', requestString)
+
+    # Get call from api.koios.rest
+    data = requests.get(requestString, params=params)
+    if (data.status_code != 200):
+        print('Error: Request failed: ', requestString)
+        return False
+    try:
+        dataJson = json.loads(data.text)
+    except:
+        print('Error: Request return not in JSON format')
+        return False
+
+    delegatorsList = dataJson
+    delegators = {}
+    try:
+        for deleg in delegatorsList:
+            delegators[deleg['stake_address']] = int(deleg['amount'])
     except:
         print('Error: Not a proper JSON return.')
     return delegators
