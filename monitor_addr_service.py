@@ -68,7 +68,7 @@ def main(myPaymentAddrFile,
         helper.appendLogJson(sentTxhashLogFile, sent_utxo)
         print('Incoming Tx detected!')
         diff_utxos = new_utxos_set.difference(sent_utxos_set)
-        
+
         for new_utxo in diff_utxos:
             print('New Utxo: ', new_utxo)
             address_received = helper.getSenderAddressFromTxHash(new_utxo, blockFrostURL, blockFrostProjID)
@@ -93,10 +93,15 @@ def main(myPaymentAddrFile,
                                                        delegatorsDict['sum'][stakeAddrRecipient], stakingTokenRatio)
                 print('Tokens to send: ', tokens_to_send)
                 print('Lovelace amount to refund: ', lovelace_amount_to_refund)
+            elif not stakeAddrRecipient in delegatorsDict['sum']:
+                tokens_to_send = 0
+                lovelace_amount_to_refund = lovelace_received - minFee
+                print('Stake address not delegated with our pool. Issuing refund...')
             else:
                 tokens_to_send, lovelace_amount_to_refund = \
                     helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
                 print('Amount received not enough. Issuing refund...')
+
             tokenRecipientList.append(cli.Recipient(address_received, stakeAddrRecipient, lovelace_received,
                                                     lovelace_amount_to_refund, tokens_to_send))
         if sendAssets.main(tokenRecipientList,
@@ -109,6 +114,8 @@ def main(myPaymentAddrFile,
             for new_utxo in diff_utxos:
                 sent_utxos_set.add(new_utxo)
             tokenRecipientList = []
+            with open(delegatorsLogFile, 'r') as jsonData:
+                delegatorsDict = json.load(jsonData)
         else:
             print('Unexpected error encountered, trying again...')
 

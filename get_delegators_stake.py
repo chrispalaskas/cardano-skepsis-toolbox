@@ -36,7 +36,7 @@ def main(poolID: str, delegatorsLogFile: str, blockFrostURL: str, blockFrostProj
 
 
 if __name__ == '__main__':
-    print('Get a list of delegators and their ')
+    print('Get a list of delegators and their stake')
     configFile = './config.json'
     delegatorsLogFile, \
     blockFrostURL, \

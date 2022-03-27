@@ -9,7 +9,11 @@ import cardano_cli_helper as cli
 def getBlockfrostAPIData(requestString: str, apiKey: str):
     header = {"project_id":apiKey}
     # Get call from blockfrost.io
-    data = requests.get(requestString, headers=header)
+    for i in range(3):
+        data = requests.get(requestString, headers=header)
+        if (data.status_code == 200):
+            break
+        print('Request failed, retrying...', i+1)
     if (data.status_code != 200):
         print('Error: Request failed: ', requestString)
         return False
@@ -170,7 +174,10 @@ def calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, 
 def calculateEarnedTokensToSend(lovelace_received, minADAToSendWithToken, minFee, totalStakedAmount, stakingTokenRatio):
     # Calculates how many tokens to send for a specific delegator
     tokens_to_send = round(totalStakedAmount * stakingTokenRatio)
-    lovelace_amount_to_refund = minADAToSendWithToken
+    if tokens_to_send == 0:
+        lovelace_amount_to_refund = lovelace_received - minFee
+    else:
+        lovelace_amount_to_refund = minADAToSendWithToken
     # Sanity Check
     if lovelace_received < minADAToSendWithToken + minFee:
         tokens_to_send = 0

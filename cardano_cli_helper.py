@@ -4,7 +4,7 @@ from os.path import exists
 from datetime import datetime
 import subprocess
 import select
- 
+
 
 class Recipient:
     address = str
@@ -30,7 +30,7 @@ def getCardanoCliValue(command, key):
         print(stderr)
         if not stderr == '':
             return (-1)
-    if not key == '': 
+    if not key == '':
         try:
             result = json.loads(stdout)[key]
             return result
@@ -38,6 +38,20 @@ def getCardanoCliValue(command, key):
             print('Error: Request return not in JSON format or key ', key, ' doesn\'t exist')
             return(-1)
     return stdout
+
+
+def getLovelaceBalance(addr):
+    print('Getting address\' balance in lovelace...')
+    utxos = getAddrUTxOs(addr)
+    dict = getTokenListFromTxHash(utxos)
+    keys = list(utxos.keys())
+    return dict['ADA'], keys
+
+
+def getStakeBalance(stake_addr):
+    command = f'cardano-cli query stake-address-info --cardano-mode --address {stake_addr} --mainnet'
+    res = eval(getCardanoCliValue(command, ''))
+    return res[0]['rewardAccountBalance']
 
 
 def getAddrUTxOs(addr):
@@ -123,11 +137,12 @@ def getMinFee(txInCnt, txOutCnt):
                                 --byron-witness-count 0 \
                                 --protocol-params-file protocol.json'
     feeString = getCardanoCliValue(command, '')
+    print(feeString)
     return int(feeString.split(' ')[0])
 
 
 def getDraftTX(txInList, returnAddr, recipientList, ttlSlot):
-    print('Creating tx.tmp...') 
+    print('Creating tx.tmp...')
     command = f'cardano-cli transaction build-raw \
                 --fee 0 '
     for txIn in txInList:
@@ -140,7 +155,35 @@ def getDraftTX(txInList, returnAddr, recipientList, ttlSlot):
                  --out-file tx.tmp'
     getCardanoCliValue(command, '')
     return
-    
+
+
+def getDraftTXSimple(txInList, returnAddr, recipientAddr, ttlSlot):
+    print('Creating simple tx.tmp...')
+    command = f'cardano-cli transaction build-raw \
+                --fee 0 '
+    for txIn in txInList:
+        command += f'--tx-in {txIn} '
+    command += f'--tx-out {recipientAddr}+0 '
+    command += f'--tx-out {returnAddr}+0 \
+                 --invalid-hereafter {ttlSlot} \
+                 --out-file tx.tmp'
+    getCardanoCliValue(command, '')
+    print('here')
+    return
+
+
+def getRawTxSimple(txInList, returnAddr, recipientAddr, lovelace_amount, lovelace_return, ttlSlot, fee):
+    print('Creating simple tx.raw...')
+    command = f'cardano-cli transaction build-raw \
+                --fee {fee} '
+    for txIn in txInList:
+        command += f'--tx-in {txIn} '
+    command += f'--tx-out {recipientAddr}+{lovelace_amount} '
+    command += f'--tx-out {returnAddr}+{lovelace_return} '
+    command += f'--invalid-hereafter {ttlSlot} \
+                 --out-file tx.raw'
+    getCardanoCliValue(command, '')
+
 
 def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict):
     print('Creating tx.raw...')
@@ -154,7 +197,7 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSl
         lovelace_to_send += recipient.lovelace_amount_to_send
         tokens_to_send += recipient.token_amount_to_send
         fees_withheld += minFee
-    
+
     lovelace_to_return = initLovelace - fee - lovelace_to_send
     tokens_to_return = initToken - tokens_to_send
     print('adaToSend: ', lovelace_to_send)
@@ -185,9 +228,9 @@ def signTx(myPaymentAddrSignKeyFile):
     getCardanoCliValue(command, '')
 
 
-def submitSignedTx():
+def submitSignedTx(signed_file='tx.signed'):
     print('Submitting Transaction...')
-    command = 'cardano-cli transaction submit --tx-file tx.signed --mainnet'
+    command = f'cardano-cli transaction submit --tx-file {signed_file} --mainnet'
     return getCardanoCliValue(command, '')
 
 
@@ -229,3 +272,36 @@ def getCnodeJournal(paymentAddr, tokenPolicyId, myTxHash):
                     return True
                 print ('Waiting for the next block to include the transaction...')
                 print ('Ctrl-C to exit. Will NOT cancel the transaction but will skip logging of completion.')
+
+
+def getRawTxStakeWithdraw(tx_in, payment_addr, stake_addr):
+    command = f'cardano-cli transaction build-raw \
+                --tx-in {tx_in} \
+                --tx-out {payment_addr}+0 \
+                --withdrawal {stake_addr}+0 \
+                --invalid-hereafter 0 \
+                --fee 0 \
+                --out-file tx.tmp'
+    getCardanoCliValue(command, '')
+
+
+def buildRawTxStakeWithdraw(tx_in, payment_addr, withdrawal, stake_addr, stake_rewards, minFee):
+    currentSlot = getCurrentSlot()
+    command = f'cardano-cli transaction build-raw \
+                --tx-in {tx_in} \
+                --tx-out {payment_addr}+{withdrawal} \
+                --withdrawal {stake_addr}+{stake_rewards} \
+                --invalid-hereafter {currentSlot+1000} \
+                --fee {minFee} \
+                --out-file withdraw_rewards.raw'
+    getCardanoCliValue(command, '')
+
+
+def signTxStakeWithdraw(myPaymentSkeyFile):
+    print('Signing stake withdraw TX')
+    command = f'cardano-cli transaction sign \
+                --tx-body-file withdraw_rewards.raw  \
+                --signing-key-file {myPaymentSkeyFile} \
+                --signing-key-file /media/christos/TOSHIBA/kryakleis/stake.skey \
+                --out-file withdraw_rewards.signed'
+    getCardanoCliValue(command, '')
