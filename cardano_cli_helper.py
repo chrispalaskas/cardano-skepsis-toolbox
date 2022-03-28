@@ -297,11 +297,11 @@ def buildRawTxStakeWithdraw(tx_in, payment_addr, withdrawal, stake_addr, stake_r
     getCardanoCliValue(command, '')
 
 
-def signTxStakeWithdraw(myPaymentSkeyFile):
+def signTxStakeWithdraw(myPaymentSkeyFile, stakeSkeyFile):
     print('Signing stake withdraw TX')
     command = f'cardano-cli transaction sign \
                 --tx-body-file withdraw_rewards.raw  \
                 --signing-key-file {myPaymentSkeyFile} \
-                --signing-key-file /media/christos/TOSHIBA/kryakleis/stake.skey \
+                --signing-key-file {stakeSkeyFile} \
                 --out-file withdraw_rewards.signed'
     getCardanoCliValue(command, '')

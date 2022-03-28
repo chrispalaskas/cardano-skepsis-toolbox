@@ -1,9 +1,11 @@
 # cardano-skepsis-toolbox
-A cardano-cli based toolbox written in Python
+A cardano-cli based toolbox written in Python. Cardano-node must be running and environment paths exported.
 
 Toolbox for various cardano related operations.
 1. Send native tokens/nfts to a number of addresses or staking addresses
 2. Monitor a payment address for incoming payments and return tokens or refunds
+3. Withdraw rewards from pool
+4. Send ADA simple transaction
 
 Installation:
 1. Install Python3: sudo apt install python3
@@ -13,9 +15,35 @@ Installation:
 5. Optional: source venv/bin/activate
 6. pip install --upgrade pip
 7. pip install -r requirements.txt
-8. Edit config.json
-9. run with <<python3 FILE.py>>
 
 Testing:
 In a terminal (Optional: with the virtual environment venv activated (Step 2 of installation)):
 python -m unittest
+
+USAGE:
+To withdraw all pool rewards to a payment address:
+    python3 withdraw_rewards.py --payment-addr-file <filepath>
+                                --payment-skey-file <filepath>
+                                --stake-addr-file <filepath>
+                                --stake-skey-file <filepath>
+                                --sign / --submit < Signing has to be done without internet connection, submitting with internet connection >
+                                                < Also stake skey has to be removed before submitting >
+
+To send only ADA from payment address to destination:
+    python3 sendADA.py --payment-addr-file <filepath>
+                    --payment-skey-file <filepath>
+                    --destination <filepath or cardano address string>
+                    --amount-lovelace <integer amount to send in lovelace>
+
+To send multiple assets and ada to multiple recipients:
+    Edit config.json
+    Create recipient list with Objects from Class cardano_cli_helper/Recipient
+    Run send_assets_to_recipients.py
+
+To monitor an address for incoming payments so that tokens are returned (run as a service):
+    Edit config.json
+    Run monitor_addr_service.py
+
+To get_delegators_stake.py (Run as a crontab job every epoch):
+    Edit config.json
+    Run get_delegators_stake.py
