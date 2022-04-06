@@ -268,7 +268,7 @@ def getCnodeJournal(paymentAddr, tokenPolicyId, myTxHash):
                 myTxHashNew = getTxInWithLargestTokenAmount(utxosNew, tokenPolicyId)
                 if myTxHash != myTxHashNew:
                     timediff = datetime.now() - now
-                    print ('Trasnaction succesfully recorded on blockchain in ', timediff, ' after ', blocksCnt, ' blocks.')
+                    print ('Transaction succesfully recorded on blockchain in ', timediff, ' after ', blocksCnt, ' blocks.')
                     return True
                 print ('Waiting for the next block to include the transaction...')
                 print ('Ctrl-C to exit. Will NOT cancel the transaction but will skip logging of completion.')
