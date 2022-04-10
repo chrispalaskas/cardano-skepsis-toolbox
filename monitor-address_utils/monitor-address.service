@@ -1,0 +1,24 @@
+[Unit]
+Description=Monitor Cardano Address
+Wants=network-online.target
+Requires=cnode.service
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=chruskal
+WorkingDirectory=/home/chruskal/cardano-skepsis-toolbox
+Environment="CARDANO_NODE_SOCKET_PATH=/opt/cardano/cnode/sockets/node0.socket"
+Environment="PATH=~/.local/bin:/opt/cardano/cnode/scripts:/home/chruskal/.local/bin:~/.local/bin:/opt/cardano/cnode/scripts:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+ExecStart=/usr/bin/python3 -u /home/chruskal/cardano-skepsis-toolbox/monitor_addr_service.py
+ExecStop=/bin/bash -l -c "exec kill -2 $(ps -ef | grep monitor-address | tr -s ' ' | cut -d ' ' -f2) &>/dev/null"
+StandardOutput=/home/chruskal/logs/monitor_address.log
+StandardError=/home/chruskal/logs/monitor_address.log
+TimeoutStopSec=5
+
+
+[Install]
+WantedBy=multi-user.target
+
