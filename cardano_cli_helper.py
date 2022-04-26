@@ -58,11 +58,13 @@ def getAddrUTxOs(addr):
     print('Getting address\' transactions...')
     outfile = 'utxos.json'
     command = f'cardano-cli query utxo --address {addr} --mainnet --out-file {outfile}'
-    getCardanoCliValue(command, '')
-    file = open(outfile)
-    utxosJson = json.load(file)
-    file.close()
-    return utxosJson
+    if getCardanoCliValue(command, '') != -1:
+        file = open(outfile)
+        utxosJson = json.load(file)
+        file.close()
+        return utxosJson
+    else:
+        return False
 
 
 def getTxInWithLargestTokenAmount(utxosJson, tokenPolicyID):
