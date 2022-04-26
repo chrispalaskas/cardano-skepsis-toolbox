@@ -4,16 +4,17 @@ import json, collections
 import shutil
 from os.path import exists
 import cardano_cli_helper as cli
-
+import time
 
 def getBlockfrostAPIData(requestString: str, apiKey: str):
     header = {"project_id":apiKey}
     # Get call from blockfrost.io
-    for i in range(3):
+    for i in range(10):
         data = requests.get(requestString, headers=header)
         if (data.status_code == 200):
             break
         print('Request failed, retrying...', i+1)
+        time.sleep(6)
     if (data.status_code != 200):
         print('Error: Request failed: ', requestString)
         return False

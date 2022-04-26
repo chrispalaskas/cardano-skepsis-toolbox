@@ -31,9 +31,9 @@ To withdraw all pool rewards to a payment address:
 
 To send only ADA from payment address to destination:
     python3 sendADA.py --payment-addr-file <filepath>
-                    --payment-skey-file <filepath>
-                    --destination <filepath or cardano address string>
-                    --amount-lovelace <integer amount to send in lovelace>
+                       --payment-skey-file <filepath>
+                       --destination <filepath or cardano address string>
+                       --amount-lovelace <integer amount to send in lovelace>
 
 To send multiple assets and ada to multiple recipients:
     Edit config.json
