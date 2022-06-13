@@ -40,24 +40,24 @@ def getCardanoCliValue(command, key):
     return stdout
 
 
-def getLovelaceBalance(addr):
+def getLovelaceBalance(addr, network):
     print('Getting address\' balance in lovelace...')
-    utxos = getAddrUTxOs(addr)
+    utxos = getAddrUTxOs(addr, network)
     dict = getTokenListFromTxHash(utxos)
     keys = list(utxos.keys())
     return dict['ADA'], keys
 
 
-def getStakeBalance(stake_addr):
-    command = f'cardano-cli query stake-address-info --cardano-mode --address {stake_addr} --mainnet'
+def getStakeBalance(stake_addr, network='mainnet'):
+    command = f'cardano-cli query stake-address-info --cardano-mode --address {stake_addr} --{network}'
     res = eval(getCardanoCliValue(command, ''))
     return res[0]['rewardAccountBalance']
 
 
-def getAddrUTxOs(addr):
+def getAddrUTxOs(addr, network='mainnet'):
     print('Getting address\' transactions...')
     outfile = 'utxos.json'
-    command = f'cardano-cli query utxo --address {addr} --mainnet --out-file {outfile}'
+    command = f'cardano-cli query utxo --address {addr} --{network} --out-file {outfile}'
     if getCardanoCliValue(command, '') != -1:
         file = open(outfile)
         utxosJson = json.load(file)
@@ -110,23 +110,23 @@ def getForeignTokensFromTokenList(tokensDict: dict, tokenPolicyID: str):
     return foreignTokensDict
 
 
-def getProtocolJson():
+def getProtocolJson(network='mainnet'):
     if not exists('protocol.json'):
         print('Getting protocol.json...')
-        command = 'cardano-cli query protocol-parameters --mainnet --out-file protocol.json'
+        command = f'cardano-cli query protocol-parameters --{network} --out-file protocol.json'
         return getCardanoCliValue(command, '')
     else:
         print ('Protocol file found.')
         return
 
 
-def getCurrentSlot():
+def getCurrentSlot(network='mainnet'):
     print('Getting current slotNo...')
-    command = f'cardano-cli query tip --mainnet'
+    command = f'cardano-cli query tip --{network}'
     return getCardanoCliValue(command, 'slot')
 
 
-def getMinFee(txInCnt, txOutCnt):
+def getMinFee(txInCnt, txOutCnt, network='mainnet'):
     print('Getting min fee for transaction...')
     txOutCnt += 1
     witness_count = 1
@@ -134,7 +134,7 @@ def getMinFee(txInCnt, txOutCnt):
                                 --tx-body-file tx.tmp \
                                 --tx-in-count {txInCnt} \
                                 --tx-out-count {txOutCnt} \
-                                --mainnet \
+                                --{network} \
                                 --witness-count {witness_count} \
                                 --byron-witness-count 0 \
                                 --protocol-params-file protocol.json'
@@ -170,7 +170,6 @@ def getDraftTXSimple(txInList, returnAddr, recipientAddr, ttlSlot):
                  --invalid-hereafter {ttlSlot} \
                  --out-file tx.tmp'
     getCardanoCliValue(command, '')
-    print('here')
     return
 
 
@@ -220,31 +219,31 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSl
     getCardanoCliValue(command, '')
 
 
-def signTx(myPaymentAddrSignKeyFile):
+def signTx(myPaymentAddrSignKeyFile, network='mainnet'):
     print('Signing Transaction...')
     command = f'cardano-cli transaction sign \
                     --signing-key-file {myPaymentAddrSignKeyFile} \
                     --tx-body-file tx.raw \
                     --out-file tx.signed \
-                    --mainnet'
+                    --{network}'
     getCardanoCliValue(command, '')
 
 
-def submitSignedTx(signed_file='tx.signed'):
+def submitSignedTx(signed_file='tx.signed', network='mainnet'):
     print('Submitting Transaction...')
-    command = f'cardano-cli transaction submit --tx-file {signed_file} --mainnet'
+    command = f'cardano-cli transaction submit --tx-file {signed_file} --{network}'
     return getCardanoCliValue(command, '')
 
 
 def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace: int, initToken: int,
-                    fromAddr: str, recipientList: list, tokenPolicyId: str, minFee: int, foreignTokensDict: dict):
-    ttlSlot = getCurrentSlot() + 2000
+                    fromAddr: str, recipientList: list, tokenPolicyId: str, minFee: int, foreignTokensDict: dict, network='mainnet'):
+    ttlSlot = getCurrentSlot(network) + 2000
     print('TTL Slot:', ttlSlot)
     getDraftTX(txInList, fromAddr, recipientList, ttlSlot)
     fee = getMinFee(len(txInList), len(recipientList))
     print ('Min fee:', fee)
     getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
-    signTx(myPaymentAddrSignKeyFile)
+    signTx(myPaymentAddrSignKeyFile, network)
     # return submitSignedTx()
 
 
