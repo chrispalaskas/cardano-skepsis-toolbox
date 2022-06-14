@@ -4,6 +4,7 @@ from os.path import exists
 from datetime import datetime
 import subprocess
 import select
+import os
 
 
 class Recipient:
@@ -22,6 +23,7 @@ class Recipient:
 
 
 def getCardanoCliValue(command, key):
+    command = '/nix/store/lay4bvzmlknbr1h6ph4bc1bhnww9gbdg-devshell-dir/bin/' + command
     with Popen(command, stdout=PIPE, stderr=PIPE, shell=True) as process:
         stdout, stderr = process.communicate()
         stdout = stdout.decode("utf-8")
@@ -42,10 +44,15 @@ def getCardanoCliValue(command, key):
 
 def getLovelaceBalance(addr, network):
     print('Getting address\' balance in lovelace...')
-    utxos = getAddrUTxOs(addr, network)
-    dict = getTokenListFromTxHash(utxos)
-    keys = list(utxos.keys())
-    return dict['ADA'], keys
+    try:
+        utxos = getAddrUTxOs(addr, network)
+        dict = getTokenListFromTxHash(utxos)
+        keys = list(utxos.keys())
+        return dict['ADA'], keys
+    except:
+        return -1, []
+
+
 
 
 def getStakeBalance(stake_addr, network='mainnet'):
@@ -62,6 +69,7 @@ def getAddrUTxOs(addr, network='mainnet'):
         file = open(outfile)
         utxosJson = json.load(file)
         file.close()
+        os.remove(outfile)
         return utxosJson
     else:
         return False
@@ -120,10 +128,10 @@ def getProtocolJson(network='mainnet'):
         return
 
 
-def getCurrentSlot(network='mainnet'):
-    print('Getting current slotNo...')
+def queryTip(keyword, network='mainnet'):
+    print(f'Getting current {keyword}...')
     command = f'cardano-cli query tip --{network}'
-    return getCardanoCliValue(command, 'slot')
+    return getCardanoCliValue(command, keyword)
 
 
 def getMinFee(txInCnt, txOutCnt, network='mainnet'):
@@ -229,15 +237,15 @@ def signTx(myPaymentAddrSignKeyFile, network='mainnet'):
     getCardanoCliValue(command, '')
 
 
-def submitSignedTx(signed_file='tx.signed', network='mainnet'):
+def submitSignedTx(signed_file='tx', network='mainnet'):
     print('Submitting Transaction...')
-    command = f'cardano-cli transaction submit --tx-file {signed_file} --{network}'
+    command = f'cardano-cli transaction submit --tx-file {signed_file}.signed --{network}'
     return getCardanoCliValue(command, '')
 
 
 def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace: int, initToken: int,
                     fromAddr: str, recipientList: list, tokenPolicyId: str, minFee: int, foreignTokensDict: dict, network='mainnet'):
-    ttlSlot = getCurrentSlot(network) + 2000
+    ttlSlot = queryTip('slot', network) + 2000
     print('TTL Slot:', ttlSlot)
     getDraftTX(txInList, fromAddr, recipientList, ttlSlot)
     fee = getMinFee(len(txInList), len(recipientList))
@@ -286,8 +294,8 @@ def getRawTxStakeWithdraw(tx_in, payment_addr, stake_addr):
     getCardanoCliValue(command, '')
 
 
-def buildRawTxStakeWithdraw(tx_in, payment_addr, withdrawal, stake_addr, stake_rewards, minFee):
-    currentSlot = getCurrentSlot()
+def buildRawTxStakeWithdraw(tx_in, payment_addr, withdrawal, stake_addr, stake_rewards, minFee, network='mainnet'):
+    currentSlot = queryTip('slot', network)
     command = f'cardano-cli transaction build-raw \
                 --tx-in {tx_in} \
                 --tx-out {payment_addr}+{withdrawal} \
@@ -298,11 +306,185 @@ def buildRawTxStakeWithdraw(tx_in, payment_addr, withdrawal, stake_addr, stake_r
     getCardanoCliValue(command, '')
 
 
-def signTxStakeWithdraw(myPaymentSkeyFile, stakeSkeyFile):
+def signTxStakeWithdraw(myPaymentSkeyFile, stakeSkeyFile, filename='tx'):
     print('Signing stake withdraw TX')
     command = f'cardano-cli transaction sign \
-                --tx-body-file withdraw_rewards.raw  \
+                --tx-body-file {filename}.raw  \
                 --signing-key-file {myPaymentSkeyFile} \
                 --signing-key-file {stakeSkeyFile} \
-                --out-file withdraw_rewards.signed'
+                --out-file {filename}.signed'
     getCardanoCliValue(command, '')
+
+
+def generatePaymentKeyPair():
+    print('Generating payment key pair...')
+    command = 'cardano-cli address key-gen \
+               --verification-key-file payment.vkey \
+               --signing-key-file payment.skey'
+    getCardanoCliValue(command, '')
+
+
+def generateStakeKeyPair():
+    print('Generating stake key pair...')
+    command = 'cardano-cli stake-address key-gen \
+               --verification-key-file stake.vkey \
+               --signing-key-file stake.skey'
+    getCardanoCliValue(command, '')
+
+
+def generatePaymentAddress(network='mainnet'):
+    print(f'Generating payment address for {network}')
+    command = f'cardano-cli address build \
+                --payment-verification-key-file payment.vkey \
+                --stake-verification-key-file stake.vkey \
+                --out-file payment.addr \
+                --{network}'
+    getCardanoCliValue(command, '')
+
+
+def generateStakeAddress(network='mainnet'):
+    print(f'Generating stake address for {network}')
+    command = f'cardano-cli stake-address build \
+                --stake-verification-key-file stake.vkey \
+                --out-file stake.addr \
+                --{network}'
+    getCardanoCliValue(command, '')
+
+
+def createRegistrationCertificate():
+    print('Creating registration certificate')
+    command = 'cardano-cli stake-address registration-certificate \
+                --stake-verification-key-file stake.vkey \
+                --out-file stake.cert'
+    getCardanoCliValue(command, '')
+
+
+def buildRegisterCertTx(TxIn, TTL, amount='1000000', network='mainnet', era='babbage-era'):
+    print('Building raw Tx for Registering Stake certificate')
+    command = f'cardano-cli transaction build \
+                --{era} \
+                --tx-in {TxIn} \
+                --tx-out $(cat payment.addr)+{amount} \
+                --change-address $(cat payment.addr) \
+                --{network}  \
+                --out-file tx.raw \
+                --certificate-file stake.cert \
+                --invalid-hereafter {TTL} \
+                --witness-override 2'
+    getCardanoCliValue(command, '')
+
+
+def generateVRFKeyPair():
+    print('Generating VRF key pair')
+    command = 'cardano-cli node key-gen-VRF \
+                --verification-key-file vrf.vkey \
+                --signing-key-file vrf.skey'
+    getCardanoCliValue(command, '')
+
+
+def generateColdKeys():
+    print('Generating cold keys')
+    command = 'cardano-cli node key-gen \
+                --cold-verification-key-file cold.vkey \
+                --cold-signing-key-file cold.skey \
+                --operational-certificate-issue-counter-file cold.counter'
+    getCardanoCliValue(command, '')
+
+
+def generateKESKeyPair():
+    print('Generating KES key pair')
+    command = 'cardano-cli node key-gen-KES \
+                --verification-key-file kes.vkey \
+                --signing-key-file kes.skey'
+    getCardanoCliValue(command, '')
+
+
+def generateOperationalCertificate(slotsPerKESPeriod=129600, network='mainnet'):
+    print('Generating operational certificate')
+    currentSlot = queryTip('slot', network)
+    kesPeriod = int(currentSlot / slotsPerKESPeriod)
+    command = f'cardano-cli node issue-op-cert \
+                --kes-verification-key-file kes.vkey \
+                --cold-signing-key-file cold.skey \
+                --operational-certificate-issue-counter cold.counter \
+                --kes-period {kesPeriod} \
+                --out-file node.cert'
+    getCardanoCliValue(command, '')
+
+
+def getHashOfMetadataJSON(file):
+    command = f'cardano-cli stake-pool metadata-hash --pool-metadata-file {file}'
+    hashValue = getCardanoCliValue(command, '')
+    return hashValue
+
+
+def generateStakePoolRegistrationCertificate(pledge, pool_ip, metadata_url, metadata_hash, pool_cost=340000000, pool_margin=0, network='mainnet', pool_port=3533):
+    print('Generating stake pool registration certificate')
+    command = f'cardano-cli stake-pool registration-certificate \
+                --cold-verification-key-file cold.vkey \
+                --vrf-verification-key-file vrf.vkey \
+                --pool-pledge {pledge} \
+                --pool-cost {pool_cost} \
+                --pool-margin {pool_margin} \
+                --pool-reward-account-verification-key-file stake.vkey \
+                --pool-owner-stake-verification-key-file stake.vkey \
+                --{network} \
+                --pool-relay-ipv4 {pool_ip} \
+                --pool-relay-port {pool_port} \
+                --metadata-url {metadata_url} \
+                --metadata-hash {metadata_hash} \
+                --out-file pool-registration.cert'
+    getCardanoCliValue(command, '')
+
+
+def generateDelegationCertificatePledge():
+    print('Generating delegation certificate pledge')
+    command = 'cardano-cli stake-address delegation-certificate \
+                --stake-verification-key-file stake.vkey \
+                --cold-verification-key-file cold.vkey \
+                --out-file delegation.cert'
+    getCardanoCliValue(command, '')
+
+
+def buildPoolAndDelegationCertTx(TxIn, TTL, amount='1000000', network='mainnet', era='babbage-era'):
+    print('Building Tx for generating pool and delegation certificate')
+    print(TxIn)
+    command = f'cardano-cli transaction build \
+                --{era} \
+                --{network} \
+                --witness-override 3 \
+                --tx-in {TxIn} \
+                --tx-out $(cat payment.addr)+{amount} \
+                --change-address $(cat payment.addr) \
+                --invalid-hereafter {TTL} \
+                --certificate-file pool-registration.cert \
+                --certificate-file delegation.cert \
+                --out-file tx.raw'
+    getCardanoCliValue(command, '')
+
+
+def signPoolAndDelegationCertTx(network='mainnet'):
+    print('Signing Tx for generating pool and delegation certificate')
+    command = f'cardano-cli transaction sign \
+                --tx-body-file tx.raw \
+                --signing-key-file payment.skey \
+                --signing-key-file stake.skey \
+                --signing-key-file cold.skey \
+                --{network} \
+                --out-file tx.signed'
+    getCardanoCliValue(command, '')
+
+
+def getPoolId():
+    print('Getting pool ID')
+    command = 'cardano-cli stake-pool id --cold-verification-key-file cold.vkey --output-format "hex"'
+    return getCardanoCliValue(command, '')
+
+
+def verifyPoolIsRegistered(poolId):
+    command = f'cardano-cli query ledger-state --testnet-magic 9 | grep publicKey | grep {poolId}'
+    pubKey = getCardanoCliValue(command, '')
+    if "publicKey" in pubKey and poolId in pubKey:
+        return True
+    else:
+        return False

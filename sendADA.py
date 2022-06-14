@@ -1,7 +1,7 @@
 import cardano_cli_helper as cli
 import argparse
 from os.path import exists
-
+import time
 
 def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, network='mainnet'):
     if not exists(paymentAddrFile):
@@ -18,8 +18,11 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, netwo
             recipientAddr = file.read().strip()
 
     cli.getProtocolJson(network)
-    lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
-    ttlSlot = cli.getCurrentSlot(network) + 1000
+    lovelace = -1
+    while lovelace == -1:
+        lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
+        time.sleep(5)
+    ttlSlot = cli.queryTip('slot', network) + 1000
     cli.getDraftTXSimple(utxos, paymentAddr, recipientAddr, ttlSlot)
     minFee = cli.getMinFee(len(utxos),1, network)
     lovelace_return = lovelace - minFee - lovelace_amount
@@ -42,13 +45,13 @@ if __name__ == '__main__':
                     type=str
                     )
     parser.add_argument('-D', '--destination',
-                    default='/home/christos/IOHK/repos/cardano-node/running_block_producer/mambaQAPool/gergely.addr',
+                    default='/home/christos/IOHK/repos/mamba-world/SPOs/spo2/payment.addr',
                     dest='destination',
                     help='Provide location destination address file or string.',
                     type=str
                     )
     parser.add_argument('-L', '--amount-lovelace',
-                    default=499990000000,
+                    default=1000000,
                     dest='amount',
                     help='Provide amount to send in lovelace.',
                     type=int
