@@ -245,7 +245,7 @@ def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace:
     print ('Min fee:', fee)
     getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
     signTx(myPaymentAddrSignKeyFile)
-    # return submitSignedTx()
+    return submitSignedTx()
 
 
 def getCnodeJournal(paymentAddr, tokenPolicyId, myTxHash):
