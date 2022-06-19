@@ -93,7 +93,7 @@ def main(fundingAddrFile, fundingSkeyFile, network='mainnet'):
         time.sleep(5)
         newLovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
     poolId = cli.getPoolId().strip()
-    print('Pool registered:', cli.verifyPoolIsRegistered(poolId))
+    print('Pool registered:', cli.verifyPoolIsRegistered(poolId, network))
 
 
 if __name__ == '__main__':

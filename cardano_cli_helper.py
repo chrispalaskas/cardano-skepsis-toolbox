@@ -496,8 +496,8 @@ def getPoolId():
     return getCardanoCliValue(command, '')
 
 
-def verifyPoolIsRegistered(poolId):
-    command = f'cardano-cli query ledger-state --testnet-magic 9 | grep publicKey | grep {poolId}'
+def verifyPoolIsRegistered(poolId, network='mainnet'):
+    command = f'cardano-cli query ledger-state --{network} | grep publicKey | grep {poolId}'
     pubKey = getCardanoCliValue(command, '')
     if "publicKey" in pubKey and poolId in pubKey:
         return True
