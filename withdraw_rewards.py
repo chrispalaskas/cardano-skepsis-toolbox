@@ -75,7 +75,7 @@ if __name__ == '__main__':
                     )
     parser.add_argument('--sign', dest='online', action='store_false')
     parser.add_argument('--submit', dest='online', action='store_true')
-    parser.set_defaults(online=False)
+    parser.set_defaults(online=False) # Change this
     args = parser.parse_args()
     main(args.payment_addr_file,
          args.payment_skey_file,

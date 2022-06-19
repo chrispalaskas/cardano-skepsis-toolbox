@@ -65,7 +65,7 @@ def main(finRecipientObjList,
         print ('Error: Tokens could not be sent.')
         return False
 
-    if cli.getCnodeJournal(paymentAddr, tokenPolicyID, myTxHash):
+    if cli.waitForTxReceipt(paymentAddr, tokenPolicyID, myTxHash, utxos):
         # Store sent transactions on log file
         now = datetime.now()
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")

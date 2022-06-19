@@ -5,7 +5,10 @@ from datetime import datetime
 import subprocess
 import select
 import os
+import time
 
+# CARDANO_CLI_PATH = '/nix/store/lay4bvzmlknbr1h6ph4bc1bhnww9gbdg-devshell-dir/bin/'
+CARDANO_CLI_PATH = ''
 
 class Recipient:
     address = str
@@ -23,8 +26,7 @@ class Recipient:
 
 
 def getCardanoCliValue(command, key):
-    command = '/nix/store/lay4bvzmlknbr1h6ph4bc1bhnww9gbdg-devshell-dir/bin/' + command
-    with Popen(command, stdout=PIPE, stderr=PIPE, shell=True) as process:
+    with Popen(CARDANO_CLI_PATH + command, stdout=PIPE, stderr=PIPE, shell=True) as process:
         stdout, stderr = process.communicate()
         stdout = stdout.decode("utf-8")
         stderr = stderr.decode("utf-8")
@@ -255,32 +257,24 @@ def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace:
     return submitSignedTx()
 
 
-def getCnodeJournal(paymentAddr, tokenPolicyId, myTxHash):
+def waitForTxReceipt(paymentAddr, tokenPolicyId, myTxHash, utxosOld):
     # Print the current time to estimate how long it will take
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print('Transaction submitted at ' + current_time + '.')
     print('Waiting for a block to include the transaction...')
+    utxosNew = utxosOld
 
-    args = ['journalctl', '--lines', '0', '--follow', '_SYSTEMD_UNIT=cnode.service']
-    f = subprocess.Popen(args, stdout=subprocess.PIPE)
-    p = select.poll()
-    p.register(f.stdout)
-    blocksCnt = 0
-    while True:
-        if p.poll(100):
-            line = f.stdout.readline().strip()
-            if "Chain extended" in str(line):
-                print ('New block arrived!')
-                blocksCnt += 1
-                utxosNew = getAddrUTxOs(paymentAddr)
-                myTxHashNew = getTxInWithLargestTokenAmount(utxosNew, tokenPolicyId)
-                if myTxHash != myTxHashNew:
-                    timediff = datetime.now() - now
-                    print ('Transaction succesfully recorded on blockchain in ', timediff, ' after ', blocksCnt, ' blocks.')
-                    return True
-                print ('Waiting for the next block to include the transaction...')
-                print ('Ctrl-C to exit. Will NOT cancel the transaction but will skip logging of completion.')
+    while utxosNew == utxosOld:
+        time.sleep(10)
+        print('Polling for new Txs')
+        utxosNew = getAddrUTxOs(paymentAddr)
+
+    myTxHashNew = getTxInWithLargestTokenAmount(utxosNew, tokenPolicyId)
+    if myTxHash != myTxHashNew:
+        timediff = datetime.now() - now
+        print ('Transaction succesfully recorded on blockchain in ', timediff)
+        return True
 
 
 def getRawTxStakeWithdraw(tx_in, payment_addr, stake_addr):
@@ -316,12 +310,33 @@ def signTxStakeWithdraw(myPaymentSkeyFile, stakeSkeyFile, filename='tx'):
     getCardanoCliValue(command, '')
 
 
+def generateKESkeys():
+    print('Generating new KES keys...')
+    command = f'cardano-cli node key-gen-KES \
+               --verification-key-file kes.vkey \
+               --signing-key-file kes.skey'
+    getCardanoCliValue(command, '')
+
+
 def generatePaymentKeyPair():
     print('Generating payment key pair...')
     command = 'cardano-cli address key-gen \
                --verification-key-file payment.vkey \
                --signing-key-file payment.skey'
     getCardanoCliValue(command, '')
+
+def getSlotsPerKESPeriod(genesisFile='/opt/cardano/cnode/files/mainnet-shelley-genesis.json'):
+    if not exists(genesisFile):
+        print('ERROR: genesis.json file does not exist.')
+        return False
+    with open(genesisFile) as genesis:
+        data = json.load(genesis)
+        try:
+            KESPeriod = data['slotsPerKESPeriod']
+            return KESPeriod
+        except Exception as e:
+            print('ERROR: File is not formatted correctly')
+            print(e)
 
 
 def generateStakeKeyPair():
@@ -399,14 +414,14 @@ def generateKESKeyPair():
     getCardanoCliValue(command, '')
 
 
-def generateOperationalCertificate(slotsPerKESPeriod=129600, network='mainnet'):
+def generateOperationalCertificate(kes_vkey='kes.vkey', cold_skey='cold.key', cold_counter='cold.counter', slotsPerKESPeriod=129600, network='mainnet'):
     print('Generating operational certificate')
     currentSlot = queryTip('slot', network)
     kesPeriod = int(currentSlot / slotsPerKESPeriod)
     command = f'cardano-cli node issue-op-cert \
-                --kes-verification-key-file kes.vkey \
-                --cold-signing-key-file cold.skey \
-                --operational-certificate-issue-counter cold.counter \
+                --kes-verification-key-file {kes_vkey} \
+                --cold-signing-key-file {cold_skey} \
+                --operational-certificate-issue-counter {cold_counter} \
                 --kes-period {kesPeriod} \
                 --out-file node.cert'
     getCardanoCliValue(command, '')
