@@ -34,7 +34,7 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
 
         withdrawal = lovelace - minFee + stake_rewards
         cli.buildRawTxStakeWithdraw(utxo, paymentAddr, withdrawal, stakeAddr, stake_rewards, minFee)
-        cli.signTxStakeWithdraw(payment_skey_file, stake_skey_file)
+        cli.signTxStakeWithdraw(payment_skey_file, stake_skey_file, 'withdraw_rewards')
     else:
         if exists(stake_skey_file):
             print('Please remove USB stick with keys, before you go online.')
@@ -42,7 +42,7 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
         if not connect():
             print('Please go online to submit transaction.')
             return 0
-        cli.submitSignedTx('withdraw_rewards.signed')
+        cli.submitSignedTx('withdraw_rewards')
 
 
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                     )
     parser.add_argument('--sign', dest='online', action='store_false')
     parser.add_argument('--submit', dest='online', action='store_true')
-    parser.set_defaults(online=False)
+    parser.set_defaults(online=False) # Change this
     args = parser.parse_args()
     main(args.payment_addr_file,
          args.payment_skey_file,
