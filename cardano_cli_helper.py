@@ -325,6 +325,7 @@ def generatePaymentKeyPair():
                --signing-key-file payment.skey'
     getCardanoCliValue(command, '')
 
+
 def getSlotsPerKESPeriod(genesisFile='/opt/cardano/cnode/files/mainnet-shelley-genesis.json'):
     if not exists(genesisFile):
         print('ERROR: genesis.json file does not exist.')
@@ -503,3 +504,25 @@ def verifyPoolIsRegistered(poolId, network='mainnet'):
         return True
     else:
         return False
+
+
+def buildSendTokensToOneDestinationTx(txInList, change_address, TTL, destination, lovelace_amount, sendDict, returnDict, network='mainnet', era='babbage-era'):
+    print('Building raw Tx for Sending multiple tokens')
+    command = f'cardano-cli transaction build \
+                --{era} \
+                --witness-override 2 '
+    for txIn in txInList:
+        command += f'--tx-in {txIn} '
+    command += f'--tx-out {destination}+{lovelace_amount}'
+    for token in sendDict:
+        command += f'+"{sendDict[token]} {token}"'
+    if not len(returnDict)==0:
+        command += f' --tx-out {change_address}+2000000'
+    for token in returnDict:
+        if returnDict[token] != 0 and token != 'ADA':
+            command += f'+"{returnDict[token]} {token}"'
+    command += f' --change-address {change_address} \
+                --{network}  \
+                --out-file tx.raw \
+                --invalid-hereafter {TTL}'
+    getCardanoCliValue(command, '')

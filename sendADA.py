@@ -13,7 +13,7 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, netwo
     if not exists(paymentSkeyFile):
         print('ERROR: Payment skey file does not exist.')
         return 0
-    if exists(recipientAddr):
+    if exists(recipientAddr): # If it doesn't exist assume it's a valid address
         with open(recipientAddr, 'r') as file:
             recipientAddr = file.read().strip()
 
