@@ -6,6 +6,9 @@ Toolbox for various cardano related operations.
 2. Monitor a payment address for incoming payments and return tokens or refunds
 3. Withdraw rewards from pool
 4. Send ADA simple transaction
+5. Send ADA and native tokens to one destination
+6. Generate SPO certificates and register on blockchain
+7. Rotate KES keys
 
 Installation:
 1. Install Python3: sudo apt install python3
@@ -47,3 +50,12 @@ To monitor an address for incoming payments so that tokens are returned (run as 
 To get_delegators_stake.py (Run as a crontab job every epoch):
     Edit config.json
     Run get_delegators_stake.py
+
+To send multiple tokens to a destination:
+    python3 sendTokens.py --payment-addr-file <filepath>
+                          --payment-skey-file <filepath>
+                          --destination <filepath or cardano address string>
+                          --amount-lovelace <integer amount to send in lovelace>
+                          --token-policy-id [Space separated list of token policies]
+                          --token-amount [Space separated list of amounts per token policy ID]
+                          --network <mainnet or testnet-magic NNNN etc>
