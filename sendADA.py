@@ -33,19 +33,19 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, netwo
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-A', '--payment-addr-file',
-                    default='/home/christos/IOHK/repos/cardano-node/running_block_producer/mambaQAPool/payment.addr',
+                    default='/home/christos/skepsis_withdraw/payment.addr',
                     dest='payment_addr_file',
                     help='Provide location of payment address file.',
                     type=str
                     )
     parser.add_argument('-K', '--payment-skey-file',
-                    default='/home/christos/IOHK/repos/cardano-node/running_block_producer/mambaQAPool/payment.skey',
+                    default='/home/christos/skepsis_withdraw/payment.skey',
                     dest='payment_skey_file',
                     help='Provide location of payment skey file.',
                     type=str
                     )
     parser.add_argument('-D', '--destination',
-                    default='/home/christos/IOHK/repos/mamba-world/SPOs/spo2/payment.addr',
+                    default='/home/christos/skepsis_withdraw/myYoroi.addr',
                     dest='destination',
                     help='Provide location destination address file or string.',
                     type=str
