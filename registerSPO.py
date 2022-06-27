@@ -122,13 +122,13 @@ if __name__ == '__main__':
                     )
     parser.add_argument('--name',
                     dest='name',
-                    help='SPO ticker name.',
+                    help='Pool name.',
                     type=str,
                     required=True
                     )
     parser.add_argument('--ticker',
                     dest='ticker',
-                    help='SPO ticker.',
+                    help='Pool ticker.',
                     type=str,
                     required=True
                     )
