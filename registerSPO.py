@@ -26,15 +26,14 @@ def generateMetadataJSON(poolName, ticker):
     return cli.getHashOfMetadataJSON(filename)
 
 
-def main(fundingAddrFile, fundingSkeyFile, network='mainnet'):
-    poolName = "spo9"
-    poolTicker = "SPO9"
+def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, network='mainnet'):
     pool_deposit = 500000000
     min_amount = 1000000
-    working_folder = f'/home/christos/IOHK/repos/mamba-world/SPOs/{poolName}'
-    if not exists(working_folder):
-        os.mkdir(working_folder)
-    os.chdir(f'/home/christos/IOHK/repos/mamba-world/SPOs/{poolName}')
+    # working_folder = f'/home/christos/IOHK/repos/mamba-world/SPOs/{poolName}'
+    # if not exists(working_folder):
+    #     os.mkdir(working_folder)
+    # os.chdir(f'/home/christos/IOHK/repos/mamba-world/SPOs/{poolName}')
+    working_folder = os.getcwd()
     if not exists(fundingAddrFile):
         print('ERROR: Funding address file does not exist.')
         return 0
@@ -75,18 +74,23 @@ def main(fundingAddrFile, fundingSkeyFile, network='mainnet'):
     cli.generateVRFKeyPair()
     cli.generateColdKeys()
     cli.generateKESKeyPair()
+    print('Generated keys')
     slotsPerKESPeriod=86400
-    cli.generateOperationalCertificate(slotsPerKESPeriod, network)
+    cli.generateOperationalCertificate(slotsPerKESPeriod=slotsPerKESPeriod, network=network)
+    print('Generated certificate')
     metadataHash = generateMetadataJSON(poolName, poolTicker).strip()
+    print('Generated metadata')
     # TODO: post on github gist, generate URL
-    metadataURL = 'https://tinyurl.com/2ch6rsyb'
+    # This URL is wrong but it will show a different address in db-sync to ease identification
+    metadataURL = f'https://example.com/{poolTicker}'
     cli.generateStakePoolRegistrationCertificate(100000000, '24.18.35.181', metadataURL, metadataHash, network=network)
     cli.generateDelegationCertificatePledge()
+    print('Generated delegation certificate pledge')
     lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
     ttlSlot = cli.queryTip('slot', network) + 1000
     cli.buildPoolAndDelegationCertTx(utxos[0], ttlSlot, min_amount, network)
     cli.signPoolAndDelegationCertTx(network)
-    cli.submitSignedTx(network=network)    
+    cli.submitSignedTx(network=network)
     newLovelace = lovelace
     while lovelace == newLovelace:
         print('Waiting for Tx to get on the blockchain')
@@ -99,16 +103,16 @@ def main(fundingAddrFile, fundingSkeyFile, network='mainnet'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-A', '--funding-addr-file',
-                    default='/home/christos/IOHK/repos/cardano-node/running_block_producer/mambaQAPool/payment.addr',
                     dest='funding_addr_file',
                     help='Provide location of funding address file.',
-                    type=str
+                    type=str,
+                    required=True
                     )
     parser.add_argument('-K', '--funding-skey-file',
-                    default='/home/christos/IOHK/repos/cardano-node/running_block_producer/mambaQAPool/payment.skey',
                     dest='funding_skey_file',
                     help='Provide location of funding skey file.',
-                    type=str
+                    type=str,
+                    required=True
                     )
     parser.add_argument('-N', '--network',
                     default='testnet-magic 9',
@@ -116,9 +120,23 @@ if __name__ == '__main__':
                     help='Provide cardano network.',
                     type=str
                     )
+    parser.add_argument('--name',
+                    dest='name',
+                    help='SPO ticker name.',
+                    type=str,
+                    required=True
+                    )
+    parser.add_argument('--ticker',
+                    dest='ticker',
+                    help='SPO ticker.',
+                    type=str,
+                    required=True
+                    )
 
     args = parser.parse_args()
 
     main(args.funding_addr_file,
          args.funding_skey_file,
+         args.name,
+         args.ticker,
          args.network)
