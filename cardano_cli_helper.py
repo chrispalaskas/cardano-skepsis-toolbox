@@ -190,7 +190,8 @@ def getRawTxSimple(txInList, returnAddr, recipientAddr, lovelace_amount, lovelac
     for txIn in txInList:
         command += f'--tx-in {txIn} '
     command += f'--tx-out {recipientAddr}+{lovelace_amount} '
-    command += f'--tx-out {returnAddr}+{lovelace_return} '
+    if lovelace_return > 0:
+        command += f'--tx-out {returnAddr}+{lovelace_return} '
     command += f'--invalid-hereafter {ttlSlot} \
                  --out-file tx.raw'
     getCardanoCliValue(command, '')
@@ -220,7 +221,7 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSl
     for txIn in txInList:
         command += f'--tx-in {txIn} '
     for recipient in recipientList:
-        command += f'--tx-out {recipient.address}+{recipient.lovelace_amount_to_send}+"{recipient.token_amount_to_send} {tokenPolicyId}" ' 
+        command += f'--tx-out {recipient.address}+{recipient.lovelace_amount_to_send}+"{recipient.token_amount_to_send} {tokenPolicyId}" '
     command += f'--tx-out {returnAddr}+{lovelace_to_return}+"{tokens_to_return} {tokenPolicyId}"'
     for key in foreignTokensDict: # Send all other incoming tokens too
         command += f'+"{foreignTokensDict[key]} {key}"'
@@ -415,7 +416,7 @@ def generateKESKeyPair():
     getCardanoCliValue(command, '')
 
 
-def generateOperationalCertificate(kes_vkey='kes.vkey', cold_skey='cold.key', cold_counter='cold.counter', slotsPerKESPeriod=129600, network='mainnet'):
+def generateOperationalCertificate(kes_vkey='kes.vkey', cold_skey='cold.skey', cold_counter='cold.counter', slotsPerKESPeriod=129600, network='mainnet'):
     print('Generating operational certificate')
     currentSlot = queryTip('slot', network)
     kesPeriod = int(currentSlot / slotsPerKESPeriod)
