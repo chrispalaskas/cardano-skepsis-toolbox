@@ -39,7 +39,7 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
 
     cli.buildSendTokensToOneDestinationTx(utxos, paymentAddr, ttlSlot, recipientAddr,
                                           lovelace_amount, sendTokensDict, dictWallet, network, era=era)
-    cli.signTx(paymentSkeyFile,network=network)
+    cli.signTx([paymentSkeyFile],network=network)
 
     cli.submitSignedTx(network=network)
 
