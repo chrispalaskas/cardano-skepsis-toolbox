@@ -1,4 +1,3 @@
-from yaml import DirectiveToken
 import cardano_cli_helper as cli
 import argparse
 from os.path import exists
@@ -40,7 +39,7 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
 
     cli.buildSendTokensToOneDestinationTx(utxos, paymentAddr, ttlSlot, recipientAddr,
                                           lovelace_amount, sendTokensDict, dictWallet, network, era=era)
-    cli.signTx(paymentSkeyFile)
+    cli.signTx(paymentSkeyFile,network=network)
 
     cli.submitSignedTx(network=network)
 
@@ -89,7 +88,7 @@ if __name__ == '__main__':
                     type=str
                     )
     parser.add_argument('-E', '--era',
-                    default='alonzo-era',
+                    default='babbage-era',
                     dest='era',
                     help='Provide cardano era.',
                     type=str

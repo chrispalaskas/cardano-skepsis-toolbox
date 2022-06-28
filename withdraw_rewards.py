@@ -34,7 +34,7 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
 
         withdrawal = lovelace - minFee + stake_rewards
         cli.buildRawTxStakeWithdraw(utxo, paymentAddr, withdrawal, stakeAddr, stake_rewards, minFee)
-        cli.signTxStakeWithdraw(payment_skey_file, stake_skey_file, 'withdraw_rewards')
+        cli.signTx([payment_skey_file, stake_skey_file], filename='withdraw_rewards')
     else:
         if exists(stake_skey_file):
             print('Please remove USB stick with keys, before you go online.')

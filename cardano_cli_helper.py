@@ -149,7 +149,6 @@ def getMinFee(txInCnt, txOutCnt, network='mainnet'):
                                 --byron-witness-count 0 \
                                 --protocol-params-file protocol.json'
     feeString = getCardanoCliValue(command, '')
-    print(feeString)
     return int(feeString.split(' ')[0])
 
 
@@ -230,13 +229,14 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSl
     getCardanoCliValue(command, '')
 
 
-def signTx(myPaymentAddrSignKeyFile, network='mainnet'):
+def signTx(signingKeyFileList, network='mainnet', filename='tx'):
     print('Signing Transaction...')
-    command = f'cardano-cli transaction sign \
-                    --signing-key-file {myPaymentAddrSignKeyFile} \
-                    --tx-body-file tx.raw \
-                    --out-file tx.signed \
-                    --{network}'
+    command = 'cardano-cli transaction sign '
+    for key in signingKeyFileList:
+        command += f'--signing-key-file {key} '
+    command += f'--tx-body-file {filename}.raw \
+                 --out-file {filename}.signed \
+                 --{network}'
     getCardanoCliValue(command, '')
 
 
@@ -254,11 +254,11 @@ def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace:
     fee = getMinFee(len(txInList), len(recipientList))
     print ('Min fee:', fee)
     getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
-    signTx(myPaymentAddrSignKeyFile, network)
-    return submitSignedTx()
+    signTx([myPaymentAddrSignKeyFile], network=network)
+    return submitSignedTx(network=network)
 
 
-def waitForTxReceipt(paymentAddr, tokenPolicyId, myTxHash, utxosOld):
+def waitForTxReceipt(paymentAddr, tokenPolicyId, myTxHash, utxosOld, network='mainnet'):
     # Print the current time to estimate how long it will take
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
@@ -269,7 +269,7 @@ def waitForTxReceipt(paymentAddr, tokenPolicyId, myTxHash, utxosOld):
     while utxosNew == utxosOld:
         time.sleep(10)
         print('Polling for new Txs')
-        utxosNew = getAddrUTxOs(paymentAddr)
+        utxosNew = getAddrUTxOs(paymentAddr,network=network)
 
     myTxHashNew = getTxInWithLargestTokenAmount(utxosNew, tokenPolicyId)
     if myTxHash != myTxHashNew:
@@ -298,16 +298,6 @@ def buildRawTxStakeWithdraw(tx_in, payment_addr, withdrawal, stake_addr, stake_r
                 --invalid-hereafter {currentSlot+1000} \
                 --fee {minFee} \
                 --out-file withdraw_rewards.raw'
-    getCardanoCliValue(command, '')
-
-
-def signTxStakeWithdraw(myPaymentSkeyFile, stakeSkeyFile, filename='tx'):
-    print('Signing stake withdraw TX')
-    command = f'cardano-cli transaction sign \
-                --tx-body-file {filename}.raw  \
-                --signing-key-file {myPaymentSkeyFile} \
-                --signing-key-file {stakeSkeyFile} \
-                --out-file {filename}.signed'
     getCardanoCliValue(command, '')
 
 
@@ -465,7 +455,6 @@ def generateDelegationCertificatePledge():
 
 def buildPoolAndDelegationCertTx(TxIn, TTL, amount='1000000', network='mainnet', era='babbage-era'):
     print('Building Tx for generating pool and delegation certificate')
-    print(TxIn)
     command = f'cardano-cli transaction build \
                 --{era} \
                 --{network} \
@@ -477,18 +466,6 @@ def buildPoolAndDelegationCertTx(TxIn, TTL, amount='1000000', network='mainnet',
                 --certificate-file pool-registration.cert \
                 --certificate-file delegation.cert \
                 --out-file tx.raw'
-    getCardanoCliValue(command, '')
-
-
-def signPoolAndDelegationCertTx(network='mainnet'):
-    print('Signing Tx for generating pool and delegation certificate')
-    command = f'cardano-cli transaction sign \
-                --tx-body-file tx.raw \
-                --signing-key-file payment.skey \
-                --signing-key-file stake.skey \
-                --signing-key-file cold.skey \
-                --{network} \
-                --out-file tx.signed'
     getCardanoCliValue(command, '')
 
 
@@ -527,3 +504,33 @@ def buildSendTokensToOneDestinationTx(txInList, change_address, TTL, destination
                 --out-file tx.raw \
                 --invalid-hereafter {TTL}'
     getCardanoCliValue(command, '')
+
+
+def buildMintTokensTx(network, era, txIn, change_address, destination_addr, lovelace_amount,
+                      token_amount, token_policy_id, policy_script_file):
+    command = f'cardano-cli transaction build \
+                --{era} \
+                --{network} \
+                --witness-override 2 \
+                --tx-in {txIn} \
+                --tx-out {destination_addr}+{lovelace_amount}+"{token_amount} {token_policy_id}" \
+                --change-address {change_address} \
+                --mint="{token_amount} {token_policy_id}" \
+                --minting-script-file {policy_script_file} \
+                --out-file tx.raw'
+    getCardanoCliValue(command, '')
+
+
+def getSenderAddressFromSimpleTxHash(txHash_txIx: str, network):
+    try:
+        txHash=txHash_txIx.split('#')[0] # Drop the TxId
+        txIx=txHash_txIx.split('#')[1] # Drop the TxHash
+        txIx = 1 + int(txIx)
+    except Exception as e:
+        print('ERROR:', e)
+        return False
+    command = f'cardano-cli query utxo \
+                --tx-in {txHash}#{txIx} \
+                --{network} \
+                --out-file rec_utxos.json && cat rec_utxos.json | jq \'.[].address\' '
+    return getCardanoCliValue(command, '')

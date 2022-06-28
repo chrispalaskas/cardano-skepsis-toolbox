@@ -1,4 +1,5 @@
 {
+    "network": "testnet-magic 9",
     "myPaymentAddrFile": "PATH_TO/payment.addr",
     "myPaymentAddrSignKeyFile": "PATH_TO/payment.skey",
     "tokenPolicyID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.XXXXXXXXXX",
