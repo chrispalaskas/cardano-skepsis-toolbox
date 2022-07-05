@@ -55,6 +55,10 @@ def main(network,
     while True:
         # Get your payment address TxHashes
         utxos = cli.getAddrUTxOs(paymentAddr,network=network)
+        if not utxos:
+            print('Error: Could not get address UTxOs. Please check network connection. Retrying in 30 seconds.')
+            time.sleep(30)
+            continue
         myTxHash = cli.getTxInWithLargestTokenAmount(utxos, tokenPolicyID)
         sent_utxos_set.add(myTxHash)
         # Store on log file

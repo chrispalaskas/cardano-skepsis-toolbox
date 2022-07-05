@@ -64,7 +64,7 @@ def getStakeBalance(stake_addr, network='mainnet'):
 
 
 def getAddrUTxOs(addr, network='mainnet'):
-    print('Getting address\' transactions...')
+    print('Getting address transactions...')
     outfile = 'utxos.json'
     command = f'cardano-cli query utxo --address {addr} --{network} --out-file {outfile}'
     if getCardanoCliValue(command, '') != -1:
