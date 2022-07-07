@@ -26,13 +26,16 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
             paymentAddr = file.read()
         with open(stake_addr_file) as file:
             stakeAddr = file.read()
-        lovelace, utxos = cli.getLovelaceBalance(paymentAddr)
-        utxo = utxos[0]
+        utxos = cli.getAddrUTxOs(paymentAddr)
+        utxo = list(utxos.keys())[0]
+        lovelace = utxos[utxo]['value']['lovelace']
+
         stake_rewards = cli.getStakeBalance(stakeAddr)
         cli.getRawTxStakeWithdraw(utxo, paymentAddr, stakeAddr)
-        minFee = cli.getMinFee(1, 0)
+        minFee = cli.getMinFee(1, 1)
 
         withdrawal = lovelace - minFee + stake_rewards
+
         cli.buildRawTxStakeWithdraw(utxo, paymentAddr, withdrawal, stakeAddr, stake_rewards, minFee)
         cli.signTx([payment_skey_file, stake_skey_file], filename='withdraw_rewards')
     else:
@@ -75,7 +78,9 @@ if __name__ == '__main__':
                     )
     parser.add_argument('--sign', dest='online', action='store_false')
     parser.add_argument('--submit', dest='online', action='store_true')
-    parser.set_defaults(online=False) # Change this
+    # Step 1 False, sign with usb stick.
+    # Step 2 True, submit
+    parser.set_defaults(online=False)
     args = parser.parse_args()
     main(args.payment_addr_file,
          args.payment_skey_file,

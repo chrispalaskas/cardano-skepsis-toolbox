@@ -44,7 +44,7 @@ def getCardanoCliValue(command, key):
     return stdout
 
 
-def getLovelaceBalance(addr, network):
+def getLovelaceBalance(addr, network='mainnet'):
     print('Getting address\' balance in lovelace...')
     try:
         utxos = getAddrUTxOs(addr, network)
