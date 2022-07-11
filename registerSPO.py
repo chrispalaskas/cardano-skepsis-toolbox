@@ -29,10 +29,6 @@ def generateMetadataJSON(poolName, ticker):
 def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, network='mainnet'):
     pool_deposit = 500000000
     min_amount = 1000000
-    # working_folder = f'/home/christos/IOHK/repos/mamba-world/SPOs/{poolName}'
-    # if not exists(working_folder):
-    #     os.mkdir(working_folder)
-    # os.chdir(f'/home/christos/IOHK/repos/mamba-world/SPOs/{poolName}')
     working_folder = os.getcwd()
     if not exists(fundingAddrFile):
         print('ERROR: Funding address file does not exist.')
@@ -83,7 +79,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, network='mainne
     # TODO: post on github gist, generate URL
     # This URL is wrong but it will show a different address in db-sync to ease identification
     metadataURL = f'https://example.com/{poolTicker}'
-    cli.generateStakePoolRegistrationCertificate(100000000, '24.18.35.181', metadataURL, metadataHash, network=network)
+    cli.generateStakePoolRegistrationCertificate(100000000, '0.0.0.0', metadataURL, metadataHash, network=network)
     cli.generateDelegationCertificatePledge()
     print('Generated delegation certificate pledge')
     lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
