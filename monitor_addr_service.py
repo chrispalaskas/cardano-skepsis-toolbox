@@ -7,8 +7,10 @@ from datetime import datetime
 from os.path import exists
 import os
 
+MODE = 'marketplace' # 'delegators'
 
-def main(myPaymentAddrFile,
+def main(network,
+         myPaymentAddrFile,
          myPaymentAddrSignKeyFile,
          tokenPolicyID,
          tokenPriceLovelace,
@@ -21,6 +23,9 @@ def main(myPaymentAddrFile,
          delegatorsLogFile,
          blockFrostURL,
          blockFrostProjID):
+    if MODE not in ['marketplace', 'delegators']:
+        print('ERROR: Supported modes: [marketplace, delegators]')
+        exit(0)
     sent_utxos_set = set([])
     # Add the last known used (sent) txHash from the logfile
     if exists(sentTxhashLogFile):
@@ -49,7 +54,11 @@ def main(myPaymentAddrFile,
     cli.getProtocolJson() # Checks if it already exists, if not gets a new copy
     while True:
         # Get your payment address TxHashes
-        utxos = cli.getAddrUTxOs(paymentAddr)
+        utxos = cli.getAddrUTxOs(paymentAddr,network=network)
+        if not utxos:
+            print('Error: Could not get address UTxOs. Please check network connection. Retrying in 30 seconds.')
+            time.sleep(30)
+            continue
         myTxHash = cli.getTxInWithLargestTokenAmount(utxos, tokenPolicyID)
         sent_utxos_set.add(myTxHash)
         # Store on log file
@@ -61,8 +70,8 @@ def main(myPaymentAddrFile,
         sent_utxo[current_time] = list(sent_utxos_set)
         new_utxos_set = set(utxos.keys())
         if (sent_utxos_set.issuperset(new_utxos_set)):
-            print ('No incoming Tx, sleeping for 60 seconds...')
-            time.sleep(60)
+            print ('No incoming Tx, sleeping for 30 seconds...')
+            time.sleep(30)
             continue
         helper.appendLogJson(incomingTxhashLogFile, latest_utxo)
         helper.appendLogJson(sentTxhashLogFile, sent_utxo)
@@ -71,7 +80,12 @@ def main(myPaymentAddrFile,
 
         for new_utxo in diff_utxos:
             print('New Utxo: ', new_utxo)
-            address_received = helper.getSenderAddressFromTxHash(new_utxo, blockFrostURL, blockFrostProjID)
+            if not blockFrostURL == '' and not blockFrostProjID == '':
+                address_received = helper.getSenderAddressFromTxHash(new_utxo, blockFrostURL, blockFrostProjID)
+            else:
+                # WARNING! Danger!!! Assuming simple incoming transaction, we can query ledger for next UTxO's change address
+                address_received = cli.getSenderAddressFromSimpleTxHash(new_utxo, network).strip()
+
             if not address_received:
                 continue
             print('Address received:', address_received)
@@ -85,26 +99,32 @@ def main(myPaymentAddrFile,
                 sent_utxos_set.add(new_utxo)
                 continue
             print('Amount received:', lovelace_received)
-            # tokens_to_send, lovelace_amount_to_refund = helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
-            stakeAddrRecipient = helper.getStakeFromAddress(address_received, blockFrostURL, blockFrostProjID)
-            if lovelace_received >= tokenPriceLovelace and stakeAddrRecipient in delegatorsDict['sum']:
-                tokens_to_send, lovelace_amount_to_refund = \
-                    helper.calculateEarnedTokensToSend(lovelace_received, minADAToSendWithToken, minFee,
-                                                       delegatorsDict['sum'][stakeAddrRecipient], stakingTokenRatio)
-                print('Tokens to send: ', tokens_to_send)
-                print('Lovelace amount to refund: ', lovelace_amount_to_refund)
-            elif not stakeAddrRecipient in delegatorsDict['sum']:
-                tokens_to_send = 0
-                lovelace_amount_to_refund = lovelace_received - minFee
-                print('Stake address not delegated with our pool. Issuing refund...')
-            else:
-                tokens_to_send, lovelace_amount_to_refund = \
-                    helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
-                print('Amount received not enough. Issuing refund...')
+            if MODE == 'marketplace':
+                tokens_to_send, lovelace_amount_to_refund = helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
+                tokenRecipientList.append(cli.Recipient(address_received, '', lovelace_received,
+                                            lovelace_amount_to_refund, tokens_to_send))
+            elif MODE == 'delegators':
+                stakeAddrRecipient = helper.getStakeFromAddress(address_received, blockFrostURL, blockFrostProjID)
+                if lovelace_received >= tokenPriceLovelace and stakeAddrRecipient in delegatorsDict['sum']:
+                    tokens_to_send, lovelace_amount_to_refund = \
+                        helper.calculateEarnedTokensToSend(lovelace_received, minADAToSendWithToken, minFee,
+                                                        delegatorsDict['sum'][stakeAddrRecipient], stakingTokenRatio)
+                    print('Tokens to send: ', tokens_to_send)
+                    print('Lovelace amount to refund: ', lovelace_amount_to_refund)
+                elif not stakeAddrRecipient in delegatorsDict['sum']:
+                    tokens_to_send = 0
+                    lovelace_amount_to_refund = lovelace_received - minFee
+                    print('Stake address not delegated with our pool. Issuing refund...')
+                else:
+                    tokens_to_send, lovelace_amount_to_refund = \
+                        helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
+                    print('Amount received not enough. Issuing refund...')
+                tokenRecipientList.append(cli.Recipient(address_received, stakeAddrRecipient, lovelace_received,
+                                                        lovelace_amount_to_refund, tokens_to_send))
 
-            tokenRecipientList.append(cli.Recipient(address_received, stakeAddrRecipient, lovelace_received,
-                                                    lovelace_amount_to_refund, tokens_to_send))
-        if sendAssets.main(tokenRecipientList,
+
+        if sendAssets.main(network,
+                           tokenRecipientList,
                            myPaymentAddrFile,
                            myPaymentAddrSignKeyFile,
                            tokenPolicyID,
@@ -114,8 +134,9 @@ def main(myPaymentAddrFile,
             for new_utxo in diff_utxos:
                 sent_utxos_set.add(new_utxo)
             tokenRecipientList = []
-            with open(delegatorsLogFile, 'r') as jsonData:
-                delegatorsDict = json.load(jsonData)
+            if MODE == 'delegators':
+                with open(delegatorsLogFile, 'r') as jsonData:
+                    delegatorsDict = json.load(jsonData)
         else:
             print('Unexpected error encountered, trying again...')
 
@@ -123,6 +144,7 @@ def main(myPaymentAddrFile,
 if __name__ == '__main__':
     print('Monitor an address for incoming payments.')
     configFile = './config.json'
+    network, \
     myPaymentAddrFile, \
     myPaymentAddrSignKeyFile, \
     tokenPolicyID, \
@@ -137,7 +159,8 @@ if __name__ == '__main__':
     blockFrostURL, \
     blockFrostProjID = helper.parseConfigMonitorAddr(configFile)
 
-    main(myPaymentAddrFile,
+    main(network,
+         myPaymentAddrFile,
          myPaymentAddrSignKeyFile,
          tokenPolicyID,
          tokenPriceLovelace,

@@ -27,7 +27,7 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, netwo
     minFee = cli.getMinFee(len(utxos),1, network)
     lovelace_return = lovelace - minFee - lovelace_amount
     cli.getRawTxSimple(utxos,paymentAddr,recipientAddr, lovelace_amount, lovelace_return, ttlSlot, minFee)
-    cli.signTx(paymentSkeyFile)
+    cli.signTx([paymentSkeyFile], network=network)
     cli.submitSignedTx(network=network)
 
 if __name__ == '__main__':

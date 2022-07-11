@@ -2,7 +2,8 @@ from multiprocessing import pool
 import requests
 import json, collections
 import shutil
-from os.path import exists
+from os.path import exists, abspath, dirname
+from os import mkdir
 import cardano_cli_helper as cli
 import time
 
@@ -61,6 +62,10 @@ def appendLogJson(logfile: str, data: dict):
             print('Logfile not loaded properly. Backing up and creating a new one.')
             shutil.copyfile(logfile, logfile + '.bk')
         else:
+            parent_folder = dirname(abspath(logfile))
+            print(parent_folder, 'parent')
+            if not exists(parent_folder):
+                mkdir(parent_folder)
             print('Logfile does not exist. Creating a new one.')
         old_data = {}
     if old_data == {}:
@@ -110,6 +115,7 @@ def parseConfigMonitorAddr(configFile):
         with open(configFile, 'r') as jsonConfig:
             print('Opened config file...')
             config = json.load(jsonConfig)
+            network = config["network"]
             myPaymentAddrFile = config['myPaymentAddrFile']
             myPaymentAddrSignKeyFile = config['myPaymentAddrSignKeyFile']
             tokenPolicyID = config['tokenPolicyID']
@@ -124,7 +130,8 @@ def parseConfigMonitorAddr(configFile):
             blockFrostURL = config['blockFrostURL']
             blockFrostProjID = config['blockFrostProjID']
             print('Config file parsed succesfully!')
-            return myPaymentAddrFile, \
+            return network, \
+                   myPaymentAddrFile, \
                    myPaymentAddrSignKeyFile, \
                    tokenPolicyID, \
                    tokenPriceLovelace, \
@@ -168,7 +175,7 @@ def calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, 
     tokens_to_send = int((lovelace_received - minADAToSendWithToken - minFee) / tokenPriceLovelace)
     if tokens_to_send<0:
         tokens_to_send = 0
-    lovelace_amount_to_refund = lovelace_received - (tokens_to_send * tokenPriceLovelace) - minFee    
+    lovelace_amount_to_refund = lovelace_received - (tokens_to_send * tokenPriceLovelace) - minFee
     return tokens_to_send, lovelace_amount_to_refund
 
 

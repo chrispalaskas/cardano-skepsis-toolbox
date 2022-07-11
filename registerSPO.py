@@ -64,7 +64,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, network='mainne
         lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
     ttlSlot = cli.queryTip('slot', network) + 1000
     cli.buildRegisterCertTx(utxos[0], ttlSlot, min_amount, network)
-    cli.signTxStakeWithdraw(paymentSkeyFile, 'stake.skey')
+    cli.signTx([paymentSkeyFile, 'stake.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
     while lovelace == newLovelace:
@@ -89,7 +89,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, network='mainne
     lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
     ttlSlot = cli.queryTip('slot', network) + 1000
     cli.buildPoolAndDelegationCertTx(utxos[0], ttlSlot, min_amount, network)
-    cli.signPoolAndDelegationCertTx(network)
+    cli.signTx(['payment.skey', 'stake.skey', 'cold.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
     while lovelace == newLovelace:

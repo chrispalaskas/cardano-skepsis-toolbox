@@ -17,9 +17,9 @@ def main():
         print('Please go offline before proceeding to generate KES keys.')
         return 0
     cli.generateKESkeys()
-    slotesPerKESPeriod = cli.getSlotsPerKESPeriod()
+    slotsPerKESPeriod = cli.getSlotsPerKESPeriod()
     currentTip = cli.getCurrentSlot()
-    currentKESPeriod = int(currentTip / slotesPerKESPeriod)
+    currentKESPeriod = int(currentTip / slotsPerKESPeriod)
     if not cli.generateOperationalCertificate(
         'kes.vkey',
         '/media/christos/TOSHIBA/kryakleis/cold.skey',
