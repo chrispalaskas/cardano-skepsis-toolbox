@@ -50,6 +50,10 @@ To monitor an address for incoming payments so that tokens are returned (run as 
     If you want to use Blockfrost to find the sender's address please provide a valid API key.
     Otherwise only use simple transactions, 1 TxIn, 1 TxOut (+ change) where the sender's address
     is assumed to be the next TxIx from the one received.
+    The variable MODE can be set to "marketplace" or "delegators". In the former mode the tokens are dispensed
+    based on a ADA/token ratio minus fees. In the later mode the tokens are dispensed based on the amount of
+    stake per epoch staked on your pool by the delegator, who has to send ADA from an address that is controlled
+    by the stake key associated with your pool.
     Edit config.json
     Run monitor_addr_service.py
 
