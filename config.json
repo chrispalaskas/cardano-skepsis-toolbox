@@ -13,7 +13,7 @@
     "sentTokensLogFile": "PATH_TO/sent_tokens_log_file.json",
     "delegatorsLogFile": "PATH_TO/delegators_stake_log.json",
     "blockFrostURL": "https://cardano-mainnet.blockfrost.io/api/v0/",
-    "blockFrostProjID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "blockFrostProjID": "",
     "koiosURL": "https://api.koios.rest/api/v0/",
     "poolID": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 }

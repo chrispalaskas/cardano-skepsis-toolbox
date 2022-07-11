@@ -10,7 +10,7 @@ Toolbox for various cardano related operations.
 6. Generate SPO certificates and register on blockchain
 7. Rotate KES keys
 
-Installation:
+Installation with python virtual environment:
 1. Install Python3: sudo apt install python3
 2. Install pip for python3: sudo apt-get install build-essential libssl-dev libffi-dev python-dev / sudo apt install python3-pip
 3. Optional: Install venv for python3: sudo pip3 install virtualenv 
@@ -18,6 +18,9 @@ Installation:
 5. Optional: source venv/bin/activate
 6. pip install --upgrade pip
 7. pip install -r requirements.txt
+
+Installation with nix environment:
+1. nix develop
 
 Testing:
 In a terminal (Optional: with the virtual environment venv activated (Step 2 of installation)):
@@ -44,6 +47,9 @@ To send multiple assets and ada to multiple recipients:
     Run send_assets_to_recipients.py
 
 To monitor an address for incoming payments so that tokens are returned (run as a service):
+    If you want to use Blockfrost to find the sender's address please provide a valid API key.
+    Otherwise only use simple transactions, 1 TxIn, 1 TxOut (+ change) where the sender's address
+    is assumed to be the next TxIx from the one received.
     Edit config.json
     Run monitor_addr_service.py
 

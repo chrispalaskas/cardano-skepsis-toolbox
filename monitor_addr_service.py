@@ -80,9 +80,11 @@ def main(network,
 
         for new_utxo in diff_utxos:
             print('New Utxo: ', new_utxo)
-            # address_received = helper.getSenderAddressFromTxHash(new_utxo, blockFrostURL, blockFrostProjID)
-            # WARNING! Danger!!! Assuming simple incoming transaction, we can query ledger for next UTxO's change address
-            address_received = cli.getSenderAddressFromSimpleTxHash(new_utxo, network).strip()
+            if not blockFrostURL == '' and not blockFrostProjID == '':
+                address_received = helper.getSenderAddressFromTxHash(new_utxo, blockFrostURL, blockFrostProjID)
+            else:
+                # WARNING! Danger!!! Assuming simple incoming transaction, we can query ledger for next UTxO's change address
+                address_received = cli.getSenderAddressFromSimpleTxHash(new_utxo, network).strip()
 
             if not address_received:
                 continue
