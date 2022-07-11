@@ -12,7 +12,9 @@ def connect(host='http://google.com'):
         return False
 
 
-def main():
+def main(kes_vkey_file,
+         cold_skey_file,
+         cold_counter_file):
     if connect():
         print('Please go offline before proceeding to generate KES keys.')
         return 0
@@ -21,9 +23,9 @@ def main():
     currentTip = cli.getCurrentSlot()
     currentKESPeriod = int(currentTip / slotsPerKESPeriod)
     if not cli.generateOperationalCertificate(
-        'kes.vkey',
-        '/media/christos/TOSHIBA/kryakleis/cold.skey',
-        '/media/christos/TOSHIBA/kryakleis/cold.counter',
+        kes_vkey_file,
+        cold_skey_file,
+        cold_counter_file,
         currentKESPeriod):
         print('ERROR: Certificate not generated.')
     else:
@@ -31,38 +33,27 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('-A', '--payment-addr-file',
-    #                 default='/home/christos/skepsis_withdraw/payment.addr',
-    #                 dest='payment_addr_file',
-    #                 help='Provide location of payment address file.',
-    #                 type=str
-    #                 )
-    # parser.add_argument('-K', '--payment-skey-file',
-    #                 default='/home/christos/skepsis_withdraw/payment.skey',
-    #                 dest='payment_skey_file',
-    #                 help='Provide location of payment skey file.',
-    #                 type=str
-    #                 )
-    # parser.add_argument('-P', '--stake-addr-file',
-    #                 default='/home/christos/skepsis_withdraw/stake.addr',
-    #                 dest='stake_addr_file',
-    #                 help='Provide location of stake address file.',
-    #                 type=str
-    #                 )
-    # parser.add_argument('-S', '--stake-skey-file',
-    #                 default='/media/christos/TOSHIBA/kryakleis/stake.skey',
-    #                 dest='stake_skey_file',
-    #                 help='Provide location stake skey file.',
-    #                 type=str
-    #                 )
-    # parser.add_argument('--sign', dest='online', action='store_false')
-    # parser.add_argument('--submit', dest='online', action='store_true')
-    # parser.set_defaults(online=False)
-    # args = parser.parse_args()
-    # main(args.payment_addr_file,
-    #      args.payment_skey_file,
-    #      args.stake_addr_file,
-    #      args.stake_skey_file,
-    #      args.online)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-V', '--kes-vkey-file',
+                    default='/media/christos/TOSHIBA/kryakleis/kes.vkey',
+                    dest='kes_vkey_file',
+                    help='Provide location of kes vkey file.',
+                    type=str
+                    )
+    parser.add_argument('-C', '--cold-skey-file',
+                    default='/media/christos/TOSHIBA/kryakleis/cold.skey',
+                    dest='cold_skey_file',
+                    help='Provide location of cold skey file.',
+                    type=str
+                    )
+    parser.add_argument('-R', '--cold-counter-file',
+                    default='/media/christos/TOSHIBA/kryakleis/cold.counter',
+                    dest='cold_counter_file',
+                    help='Provide location of cold counter file.',
+                    type=str
+                    )
+
+    args = parser.parse_args()
+    main(args.kes_vkey_file,
+         args.cold_skey_file,
+         args.cold_counter_file)
