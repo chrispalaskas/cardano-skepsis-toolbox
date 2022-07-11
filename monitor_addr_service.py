@@ -51,7 +51,7 @@ def main(network,
 
     with open(myPaymentAddrFile) as file:
         paymentAddr = file.read()
-    cli.getProtocolJson() # Checks if it already exists, if not gets a new copy
+    cli.getProtocolJson(network=network) # Checks if it already exists, if not gets a new copy
     while True:
         # Get your payment address TxHashes
         utxos = cli.getAddrUTxOs(paymentAddr,network=network)
