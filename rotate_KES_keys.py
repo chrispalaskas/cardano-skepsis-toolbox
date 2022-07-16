@@ -3,6 +3,7 @@ from os.path import exists
 import urllib.request
 import argparse
 
+NETWORK = 'mainnet'
 
 def connect(host='http://google.com'):
     try:
@@ -20,8 +21,9 @@ def main(kes_vkey_file,
         return 0
     cli.generateKESkeys()
     slotsPerKESPeriod = cli.getSlotsPerKESPeriod()
-    currentTip = cli.getCurrentSlot()
+    currentTip = cli.queryTip('slot', NETWORK)
     currentKESPeriod = int(currentTip / slotsPerKESPeriod)
+
     if not cli.generateOperationalCertificate(
         kes_vkey_file,
         cold_skey_file,
