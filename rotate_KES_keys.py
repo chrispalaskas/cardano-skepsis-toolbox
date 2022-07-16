@@ -24,6 +24,7 @@ def main(kes_vkey_file,
     currentTip = cli.queryTip('slot', NETWORK)
     currentKESPeriod = int(currentTip / slotsPerKESPeriod)
 
+    # Use the kes.vkey that was just generated
     if not cli.generateOperationalCertificate(
         kes_vkey_file,
         cold_skey_file,
@@ -32,12 +33,13 @@ def main(kes_vkey_file,
         print('ERROR: Certificate not generated.')
     else:
         print('Certificate generated.')
+    # Replace kes.skey and node.cert at your block producer
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-V', '--kes-vkey-file',
-                    default='/media/christos/TOSHIBA/kryakleis/kes.vkey',
+                    default='kes.vkey',
                     dest='kes_vkey_file',
                     help='Provide location of kes vkey file.',
                     type=str
