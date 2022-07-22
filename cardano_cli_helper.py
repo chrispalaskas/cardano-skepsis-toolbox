@@ -55,8 +55,6 @@ def getLovelaceBalance(addr, network='mainnet'):
         return -1, []
 
 
-
-
 def getStakeBalance(stake_addr, network='mainnet'):
     command = f'cardano-cli query stake-address-info --cardano-mode --address {stake_addr} --{network}'
     res = eval(getCardanoCliValue(command, ''))
@@ -416,7 +414,7 @@ def generateOperationalCertificate(kes_vkey='kes.vkey', cold_skey='cold.skey', c
                 --operational-certificate-issue-counter {cold_counter} \
                 --kes-period {kesPeriod} \
                 --out-file node.cert'
-    getCardanoCliValue(command, '')
+    return getCardanoCliValue(command, '') != -1
 
 
 def getHashOfMetadataJSON(file):
