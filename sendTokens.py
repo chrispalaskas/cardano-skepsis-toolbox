@@ -5,17 +5,18 @@ import time
 
 def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, policyIDList, tokenAmountList, network, era):
 
-    if not exists(paymentAddrFile):
-        print('ERROR: Payment address file does not exist.')
-        return 0
+    if exists(paymentAddrFile):
+        with open(paymentAddrFile, 'r') as file:
+            paymentAddr = file.read().strip()
+    else:
+        paymentAddr = paymentAddrFile.strip()
     if not exists(paymentSkeyFile):
         print('ERROR: Payment skey file does not exist.')
         return 0
     if not len(policyIDList) == len(tokenAmountList):
         print('ERROR: Policy ID list does not match with Token amount List.')
         return 0
-    with open(paymentAddrFile, 'r') as file:
-            paymentAddr = file.read().strip()
+
     if exists(recipientAddr): # If it doesn't exist assume it's a valid address
         with open(recipientAddr, 'r') as file:
             recipientAddr = file.read().strip()
@@ -45,10 +46,10 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-A', '--payment-addr-file',
+    parser.add_argument('-A', '--payment-addr',
                     default='/opt/cardano/cnode/priv/wallet/SkepsisCoinWallet/payment.addr',
-                    dest='payment_addr_file',
-                    help='Provide location of payment address file.',
+                    dest='payment_addr',
+                    help='Provide payment address or location of payment address file.',
                     type=str
                     )
     parser.add_argument('-K', '--payment-skey-file',
@@ -95,7 +96,7 @@ if __name__ == '__main__':
                     )
     args = parser.parse_args()
 
-    main(args.payment_addr_file,
+    main(args.payment_addr,
          args.payment_skey_file,
          args.destination,
          args.amount,
