@@ -492,8 +492,6 @@ def buildSendTokensToOneDestinationTx(txInList, change_address, TTL, destination
     command += f'--tx-out {destination}+{lovelace_amount}'
     for token in sendDict:
         command += f'+"{sendDict[token]} {token}"'
-    if not len(returnDict)==0:
-        command += f' --tx-out {change_address}+2000000'
     for token in returnDict:
         if returnDict[token] != 0 and token != 'ADA':
             command += f'+"{returnDict[token]} {token}"'
@@ -522,8 +520,8 @@ def buildMintTokensTx(network, era, txIn, change_address, destination_addr, love
 def getSenderAddressFromSimpleTxHash(txHash_txIx: str, network):
     try:
         txHash=txHash_txIx.split('#')[0] # Drop the TxId
-        txIx=txHash_txIx.split('#')[1] # Drop the TxHash
-        txIx = 1 + int(txIx)
+        # Since cardano-cli build tx with change address returns the change as txIx 0:
+        txIx = 0
     except Exception as e:
         print('ERROR:', e)
         return False

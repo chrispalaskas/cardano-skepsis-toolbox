@@ -4,12 +4,11 @@ from os.path import exists
 import time
 
 def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, network='mainnet'):
-    if not exists(paymentAddrFile):
-        print('ERROR: Payment address file does not exist.')
-        return 0
-    else:
+    if exists(paymentAddrFile):
         with open(paymentAddrFile, 'r') as file:
             paymentAddr = file.read().strip()
+    else:
+        paymentAddr = paymentAddrFile.strip()
     if not exists(paymentSkeyFile):
         print('ERROR: Payment skey file does not exist.')
         return 0
