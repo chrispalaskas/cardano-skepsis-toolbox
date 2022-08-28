@@ -29,7 +29,6 @@ def main(network,
         finRecipientObjList,
         myPaymentAddrFile,
         myPaymentAddrSignKeyFile,
-        tokenPolicyID,
         sentTokensLogFile,
         delegatorsLogFile,
         minFee):
@@ -64,7 +63,7 @@ def main(network,
 
     # Send noOfTokens to all your recipients with one Tx
     result = cli.sendTokenToAddr(myPaymentAddrSignKeyFile, allTxInList, myInitLovelace, myInitToken, paymentAddr,
-                                 finRecipientObjList, tokenPolicyID, minFee, foreignTokensDict, network=network)
+                                 finRecipientObjList, minFee, foreignTokensDict, network=network)
     if result == -1:
         print ('Error: Tokens could not be sent.')
         return False
@@ -79,7 +78,8 @@ def main(network,
             latest_tx[current_time][recipient.address]['Stake Addr'] = recipient.stake_address
             latest_tx[current_time][recipient.address]['ADA Received'] = '%.3f'%(recipient.lovelace_amount_received/1000000)
             latest_tx[current_time][recipient.address]['ADA Sent'] = '%.3f'%(recipient.lovelace_amount_to_send/1000000)
-            latest_tx[current_time][recipient.address]['Tokens Sent'] = recipient.token_amount_to_send
+            for (token, amount) in zip(recipient.tokens_policy_id_to_send, recipient.tokens_amount_to_send):
+                latest_tx[current_time][recipient.address]['Tokens Sent'][token] = amount
             if MODE == 'delegators':
                 # Zero the sum of the total stake for addresses succesfully sent
                 try:

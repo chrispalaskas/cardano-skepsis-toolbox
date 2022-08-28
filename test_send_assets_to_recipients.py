@@ -12,12 +12,12 @@ class TestGetStakeFromAddress(unittest.TestCase):
                                             'stake1u8wsm38q7axhqswt45wdlsqd3r0n5spjht3qzrgj6u3ss4slthexn',
                                             2000000,
                                             1444443,
-                                            200)]
+                                            [tokenPolicyID],
+                                            [200])]
 
         if sendAssets.main( tokenRecipientList,
                             myPaymentAddrFile,
                             myPaymentAddrSignKeyFile,
-                            tokenPolicyID,
                             sentTokensLogFile,
                             delegatorsLogFile,
                             minFee):

@@ -15,14 +15,16 @@ class Recipient:
     stake_address = str
     lovelace_amount_received = int
     lovelace_amount_to_send = int
-    token_amount_to_send = int
+    tokens_policy_id_to_send = [str]
+    tokens_amount_to_send = [int]
 
-    def __init__(self, addr, stake_addr, lovelace_in, lovelace_out, tokens_out):
+    def __init__(self, addr, stake_addr, lovelace_in, lovelace_out, tokens_id_out, tokens_amount_out):
         self.address = addr
         self.stake_address = stake_addr
         self.lovelace_amount_received = lovelace_in
         self.lovelace_amount_to_send = lovelace_out
-        self.token_amount_to_send = tokens_out
+        self.tokens_policy_id_to_send = tokens_id_out
+        self.tokens_amount_to_send = tokens_amount_out
 
 
 def getCardanoCliValue(command, key):
@@ -194,36 +196,29 @@ def getRawTxSimple(txInList, returnAddr, recipientAddr, lovelace_amount, lovelac
     getCardanoCliValue(command, '')
 
 
-def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict):
+def getRawTx(txInList, returnAddr, recipientList, ttlSlot, era='alonzo', network='mainnet'):
     print('Creating tx.raw...')
     lovelace_received = 0
     lovelace_to_send = 0
-    tokens_to_send = 0
-    fees_withheld = 0
     # The recipient is of class Recipient (address, lovelace in, lovelace out, token out)
     for recipient in recipientList:
         lovelace_received += recipient.lovelace_amount_received
         lovelace_to_send += recipient.lovelace_amount_to_send
-        tokens_to_send += recipient.token_amount_to_send
-        fees_withheld += minFee
 
-    lovelace_to_return = initLovelace - fee - lovelace_to_send
-    tokens_to_return = initToken - tokens_to_send
-    print('adaToSend: ', lovelace_to_send)
-    print('tokensToSend: ', tokens_to_send)
-    print('adaToReturn: ', lovelace_to_return)
-    print('tokensToReturn: ', tokens_to_return)
-    command = f'cardano-cli transaction build-raw \
-                --fee {fee} '
+    command = f'cardano-cli transaction build \
+                -- {era} \
+                -- {network}'
     for txIn in txInList:
         command += f'--tx-in {txIn} '
     for recipient in recipientList:
-        command += f'--tx-out {recipient.address}+{recipient.lovelace_amount_to_send}+"{recipient.token_amount_to_send} {tokenPolicyId}" '
-    command += f'--tx-out {returnAddr}+{lovelace_to_return}+"{tokens_to_return} {tokenPolicyId}"'
-    for key in foreignTokensDict: # Send all other incoming tokens too
-        command += f'+"{foreignTokensDict[key]} {key}"'
+        command += f'--tx-out {recipient.address}+{recipient.lovelace_amount_to_send}'
+        for (token, amount) in zip(recipient.tokens_policy_id_to_send, recipient.tokens_amount_to_send):
+            command += f'+"{amount} {token}"'
+    command += f' --change-address {returnAddr}'
     command += f' --invalid-hereafter {ttlSlot} \
                  --out-file tx.raw'
+    print('#####################################')
+    print(command)
     getCardanoCliValue(command, '')
 
 
@@ -245,13 +240,13 @@ def submitSignedTx(signed_file='tx', network='mainnet'):
 
 
 def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace: int, initToken: int,
-                    fromAddr: str, recipientList: list, tokenPolicyId: str, minFee: int, foreignTokensDict: dict, network='mainnet'):
+                    fromAddr: str, recipientList: list, minFee: int, foreignTokensDict: dict, network='mainnet'):
     ttlSlot = queryTip('slot', network) + 2000
     print('TTL Slot:', ttlSlot)
     getDraftTX(txInList, fromAddr, recipientList, ttlSlot)
     fee = getMinFee(len(txInList), len(recipientList))
     print ('Min fee:', fee)
-    getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
+    getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, foreignTokensDict)
     signTx([myPaymentAddrSignKeyFile], network=network)
     return submitSignedTx(network=network)
 

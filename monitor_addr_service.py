@@ -102,7 +102,7 @@ def main(network,
             if MODE == 'marketplace':
                 tokens_to_send, lovelace_amount_to_refund = helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
                 tokenRecipientList.append(cli.Recipient(address_received, '', lovelace_received,
-                                            lovelace_amount_to_refund, tokens_to_send))
+                                            lovelace_amount_to_refund, [tokenPolicyID], [tokens_to_send]))
             elif MODE == 'delegators':
                 stakeAddrRecipient = helper.getStakeFromAddress(address_received, blockFrostURL, blockFrostProjID)
                 if lovelace_received >= tokenPriceLovelace and stakeAddrRecipient in delegatorsDict['sum']:
@@ -120,14 +120,13 @@ def main(network,
                         helper.calculateSoldTokensToSend(lovelace_received, minADAToSendWithToken, minFee, tokenPriceLovelace)
                     print('Amount received not enough. Issuing refund...')
                 tokenRecipientList.append(cli.Recipient(address_received, stakeAddrRecipient, lovelace_received,
-                                                        lovelace_amount_to_refund, tokens_to_send))
+                                                        lovelace_amount_to_refund, [tokenPolicyID], [tokens_to_send]))
 
 
         if sendAssets.main(network,
                            tokenRecipientList,
                            myPaymentAddrFile,
                            myPaymentAddrSignKeyFile,
-                           tokenPolicyID,
                            sentTokensLogFile,
                            delegatorsLogFile,
                            minFee):
