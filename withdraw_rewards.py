@@ -78,8 +78,8 @@ if __name__ == '__main__':
                     )
     parser.add_argument('--sign', dest='online', action='store_false')
     parser.add_argument('--submit', dest='online', action='store_true')
-    # Step 1 False, sign with usb stick.
-    # Step 2 True, submit
+    # Step 1: Offline, set to False, sign with usb stick.
+    # Step 2: Online, set to True, submit
     parser.set_defaults(online=False)
     args = parser.parse_args()
     main(args.payment_addr_file,
