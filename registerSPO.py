@@ -37,7 +37,6 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, network='mainne
         print('ERROR: Funding skey file does not exist.')
         return 0
 
-    cli.getProtocolJson(network)
     cli.generatePaymentKeyPair()
     cli.generateStakeKeyPair()
     cli.generatePaymentAddress(network)

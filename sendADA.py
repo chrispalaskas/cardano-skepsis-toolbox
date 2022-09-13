@@ -16,7 +16,6 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, netwo
         with open(recipientAddr, 'r') as file:
             recipientAddr = file.read().strip()
 
-    cli.getProtocolJson(network)
     lovelace = -1
     while lovelace == -1:
         lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)

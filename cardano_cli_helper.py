@@ -138,6 +138,7 @@ def getMinFee(txInCnt, txOutCnt, network='mainnet'):
     print('Getting min fee for transaction...')
     txOutCnt += 1
     witness_count = 1
+    getProtocolJson(network=network)
     command = f'cardano-cli transaction calculate-min-fee \
                                 --tx-body-file tx.tmp \
                                 --tx-in-count {txInCnt} \
@@ -249,7 +250,7 @@ def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace:
     ttlSlot = queryTip('slot', network) + 2000
     print('TTL Slot:', ttlSlot)
     getDraftTX(txInList, fromAddr, recipientList, ttlSlot)
-    fee = getMinFee(len(txInList), len(recipientList))
+    fee = getMinFee(len(txInList), len(recipientList), network=network)
     print ('Min fee:', fee)
     getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
     signTx([myPaymentAddrSignKeyFile], network=network)

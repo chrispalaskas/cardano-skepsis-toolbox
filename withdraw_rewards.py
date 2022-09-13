@@ -20,7 +20,6 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
         if not exists(stake_skey_file):
             print('Please insert USB stick with keys')
             return 0
-        cli.getProtocolJson()
 
         with open(payment_addr_file) as file:
             paymentAddr = file.read()
