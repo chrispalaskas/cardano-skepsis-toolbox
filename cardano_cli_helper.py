@@ -250,7 +250,7 @@ def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace:
     ttlSlot = queryTip('slot', network) + 2000
     print('TTL Slot:', ttlSlot)
     getDraftTX(txInList, fromAddr, recipientList, ttlSlot)
-    fee = getMinFee(len(txInList), len(recipientList))
+    fee = getMinFee(len(txInList), len(recipientList), network=network)
     print ('Min fee:', fee)
     getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
     signTx([myPaymentAddrSignKeyFile], network=network)
