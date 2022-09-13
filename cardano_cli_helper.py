@@ -138,6 +138,7 @@ def getMinFee(txInCnt, txOutCnt, network='mainnet'):
     print('Getting min fee for transaction...')
     txOutCnt += 1
     witness_count = 1
+    getProtocolJson(network=network)
     command = f'cardano-cli transaction calculate-min-fee \
                                 --tx-body-file tx.tmp \
                                 --tx-in-count {txInCnt} \

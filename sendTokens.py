@@ -25,7 +25,6 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
     for tokenID, tokenAmount in zip(policyIDList, tokenAmountList):
         sendTokensDict[tokenID] = tokenAmount
 
-    cli.getProtocolJson(network)
     utxos = cli.getAddrUTxOs(paymentAddr, network)
     dictWallet = cli.getTokenListFromTxHash(utxos)
 
