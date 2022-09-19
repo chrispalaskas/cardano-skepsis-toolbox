@@ -41,7 +41,6 @@ def main(network,
     if MODE == 'delegators':
         with open(delegatorsLogFile, 'r') as jsonlog:
             delegatorsDict = json.load(jsonlog)
-    cli.getProtocolJson() # Checks if it already exists, if not gets a new copy
 
     # Get your payment address TxHashes
     utxos = cli.getAddrUTxOs(paymentAddr, network)
