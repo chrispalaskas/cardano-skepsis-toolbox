@@ -21,22 +21,15 @@ def main(kes_vkey_file,
         return 0
     cli.generateKESkeys()
     slotsPerKESPeriod = cli.getSlotsPerKESPeriod()
-    print('slotsPerKESPeriod', slotsPerKESPeriod)
     assert slotsPerKESPeriod > 0, 'slotsPerKESPeriod is zero'
-    currentTip = cli.queryTip('slot', NETWORK)
-    print('currentTip', currentTip)
-    assert type(currentTip) == int, 'currentTip is not an integer'
-    assert currentTip > 0, 'current tip is not a positive number'
-
-    currentKESPeriod = int(currentTip / slotsPerKESPeriod)
-    print('currentKESPeriod', currentKESPeriod)
 
     # Use the kes.vkey that was just generated
     if not cli.generateOperationalCertificate(
         kes_vkey_file,
         cold_skey_file,
         cold_counter_file,
-        currentKESPeriod):
+        slotsPerKESPeriod,
+        NETWORK):
         print('ERROR: Certificate not generated.')
     else:
         print('Certificate generated.')

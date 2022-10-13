@@ -407,13 +407,16 @@ def generateKESKeyPair():
 
 def generateOperationalCertificate(kes_vkey='kes.vkey', cold_skey='cold.skey', cold_counter='cold.counter', slotsPerKESPeriod=129600, network='mainnet'):
     print('Generating operational certificate')
-    currentSlot = queryTip('slot', network)
-    kesPeriod = int(currentSlot / slotsPerKESPeriod)
+    currentTip = queryTip('slot', network)
+    assert type(currentTip) == int, 'currentTip is not an integer'
+    assert currentTip > 0, 'current tip is not a positive number'
+
+    currentKESPeriod = int(currentTip / slotsPerKESPeriod)
     command = f'cardano-cli node issue-op-cert \
                 --kes-verification-key-file {kes_vkey} \
                 --cold-signing-key-file {cold_skey} \
                 --operational-certificate-issue-counter {cold_counter} \
-                --kes-period {kesPeriod} \
+                --kes-period {currentKESPeriod} \
                 --out-file node.cert'
     return getCardanoCliValue(command, '') != -1
 
