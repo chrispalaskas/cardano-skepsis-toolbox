@@ -494,7 +494,7 @@ def buildSendTokensToOneDestinationTx(txInList, change_address, TTL, destination
     for token in sendDict:
         command += f'+"{sendDict[token]} {token}"'
     if len(returnDict) > 1:
-        command += f' --tx-out {change_address}+2000000'
+        command += f' --tx-out {change_address}+2172240'
     for token in returnDict:
         if returnDict[token] != 0 and token != 'ADA':
             command += f'+"{returnDict[token]} {token}"'

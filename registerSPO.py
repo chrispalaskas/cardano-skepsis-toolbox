@@ -57,6 +57,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
     cli.createRegistrationCertificate()
 
     # Fund newly created account
+    # TODO: Verify the funding account has enough funds
     sendADA.main(fundingAddrFile,
                  fundingSkeyFile,
                  os.path.join(working_folder, 'payment.addr'),
