@@ -3,7 +3,6 @@
 # User should monitor the progress.
 
 
-from multiprocessing import pool
 import cardano_cli_helper as cli
 import sendADA
 import argparse
@@ -49,7 +48,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
 
     cli.generatePaymentKeyPair()
     cli.generateStakeKeyPair()
-    cli.generatePaymentAddress(network)
+    cli.generatePaymentAddressForStaking(network)
     with open('payment.addr') as addr_file:
         paymentAddr = addr_file.read().strip()
     paymentSkeyFile = 'payment.skey'

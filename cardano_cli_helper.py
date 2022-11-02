@@ -342,6 +342,15 @@ def generatePaymentAddress(network='mainnet'):
     print(f'Generating payment address for {network}')
     command = f'cardano-cli address build \
                 --payment-verification-key-file payment.vkey \
+                --out-file payment.addr \
+                --{network}'
+    getCardanoCliValue(command, '')
+
+
+def generatePaymentAddressForStaking(network='mainnet'):
+    print(f'Generating payment address for {network}')
+    command = f'cardano-cli address build \
+                --payment-verification-key-file payment.vkey \
                 --stake-verification-key-file stake.vkey \
                 --out-file payment.addr \
                 --{network}'
@@ -491,8 +500,11 @@ def buildSendTokensToOneDestinationTx(txInList, change_address, TTL, destination
     command = f'cardano-cli transaction build \
                 --{era} \
                 --witness-override 2 '
+    i = 1
     for txIn in txInList:
-        command += f'--tx-in {txIn} '
+        i=i+1
+        if i < 400: # Make sure it fits in one tx
+            command += f'--tx-in {txIn} '
     command += f'--tx-out {destination}+{lovelace_amount}'
     for token in sendDict:
         command += f'+"{sendDict[token]} {token}"'
