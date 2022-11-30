@@ -32,8 +32,8 @@ def getCardanoCliValue(command, key):
         stderr = stderr.decode("utf-8")
         print(stdout)
         print(stderr)
-        if not stderr == '':
-            return (-1)
+        if process.returncode != 0:
+            raise Exception(f'Error calling {command}')
     if not key == '':
         try:
             result = json.loads(stdout)[key]
