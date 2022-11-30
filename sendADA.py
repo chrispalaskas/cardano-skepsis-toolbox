@@ -18,13 +18,10 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, netwo
 
     lovelace = -1
     while lovelace == -1:
-        lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
+        lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
         time.sleep(5)
     ttlSlot = cli.queryTip('slot', network) + 1000
-    cli.getDraftTXSimple(utxos, paymentAddr, recipientAddr, ttlSlot)
-    minFee = cli.getMinFee(len(utxos),1, network)
-    lovelace_return = lovelace - minFee - lovelace_amount
-    cli.getRawTxSimple(utxos,paymentAddr,recipientAddr, lovelace_amount, lovelace_return, ttlSlot, minFee)
+    cli.getRawTxSimple(utxos, paymentAddr, recipientAddr, lovelace_amount, ttlSlot, network=network)
     cli.signTx([paymentSkeyFile], network=network)
     cli.submitSignedTx(network=network)
 
