@@ -57,6 +57,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
 
     # Fund newly created account
     # TODO: Verify the funding account has enough funds
+    print(f'funding address {paymentAddr}')
     sendADA.main(fundingAddrFile,
                  fundingSkeyFile,
                  os.path.join(working_folder, 'payment.addr'),
@@ -66,16 +67,16 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
     while lovelace == -1:
         print('Waiting for Tx to get on the blockchain')
         time.sleep(5)
-        lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
+        lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
     ttlSlot = cli.queryTip('slot', network) + 1000
-    cli.buildRegisterCertTx(utxos[0], ttlSlot, min_amount, network)
+    cli.buildRegisterCertTx(utxos, ttlSlot, min_amount, network)
     cli.signTx([paymentSkeyFile, 'stake.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
     while lovelace == newLovelace:
         print('Waiting for Tx to get on the blockchain')
         time.sleep(5)
-        newLovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
+        newLovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
     cli.generateVRFKeyPair()
     cli.generateColdKeys()
     cli.generateKESKeyPair()
@@ -91,16 +92,16 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
     cli.generateStakePoolRegistrationCertificate(pledge_amount, pool_ip, metadataURL, metadataHash, network=network)
     cli.generateDelegationCertificatePledge()
     print('Generated delegation certificate pledge')
-    lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
+    lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
     ttlSlot = cli.queryTip('slot', network) + 1000
-    cli.buildPoolAndDelegationCertTx(utxos[0], ttlSlot, min_amount, network)
+    cli.buildPoolAndDelegationCertTx(utxos, ttlSlot, min_amount, network)
     cli.signTx(['payment.skey', 'stake.skey', 'cold.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
     while lovelace == newLovelace:
         print('Waiting for Tx to get on the blockchain')
         time.sleep(5)
-        newLovelace, utxos = cli.getLovelaceBalance(paymentAddr, network)
+        newLovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
     poolId = cli.getPoolId().strip()
     print('Pool registered:', cli.verifyPoolIsRegistered(poolId, network))
 

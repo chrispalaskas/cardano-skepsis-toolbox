@@ -13,7 +13,7 @@ Toolbox for various cardano related operations.
 Installation with python virtual environment:
 1. Install Python3: sudo apt install python3
 2. Install pip for python3: sudo apt-get install build-essential libssl-dev libffi-dev python-dev / sudo apt install python3-pip
-3. Optional: Install venv for python3: sudo pip3 install virtualenv 
+3. Optional: Install venv for python3: sudo pip3 install virtualenv
 4. Optional: python3 -m venv venv
 5. Optional: source venv/bin/activate
 6. pip install --upgrade pip
@@ -69,3 +69,17 @@ To send multiple tokens to a destination:
                           --token-policy-id [Space separated list of token policies]
                           --token-amount [Space separated list of amounts per token policy ID]
                           --network <mainnet or testnet-magic NNNN etc>
+
+## Examples:
+
+### Register a new SPO:
+
+In an empty folder run:
+
+```
+python3 /path/to/registerSPO.py \
+  --funding-addr-file /path/to/payment.addr \
+  --funding-skey-file /path/to/payment.skey \
+  --network 'testnet-magic 7' \
+  --name "MY-SPO-NAME" --ticker 'AAAA'
+```
