@@ -542,8 +542,8 @@ def buildMintTokensTx(network, era, txIn, change_address, destination_addr, love
 def getSenderAddressFromSimpleTxHash(txHash_txIx: str, network):
     try:
         txHash=txHash_txIx.split('#')[0] # Drop the TxId
-        # Since cardano-cli build tx with change address returns the change as txIx 0:
-        txIx = 0
+        txIx=txHash_txIx.split('#')[1] # Drop the TxHash
+        txIx = 1 + int(txIx)
     except Exception as e:
         print('ERROR:', e)
         return False
