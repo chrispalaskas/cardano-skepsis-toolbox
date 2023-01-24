@@ -27,6 +27,13 @@ def generateMetadataJSON(poolName, ticker, homepage):
 
 
 def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_amount, pledge_amount, pool_ip, network='mainnet'):
+    if not exists(poolName):
+        print('Nope')
+        os.mkdir(poolName)
+    else:
+        print('Destination folder already exists. Please delete or rename.')
+        return
+    os.chdir(poolName)
     ticker_pattern = re.search('^[A-Z0-9]+$', poolTicker)
     if len(poolTicker)<3 or len(poolTicker)>5:
         print('ERROR: Ticker should be between 3 and 5 characters')
