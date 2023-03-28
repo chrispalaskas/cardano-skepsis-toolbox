@@ -6,6 +6,7 @@ import subprocess
 import select
 import os
 import time
+import string
 
 # CARDANO_CLI_PATH = '/nix/store/lay4bvzmlknbr1h6ph4bc1bhnww9gbdg-devshell-dir/bin/'
 CARDANO_CLI_PATH = ''
@@ -30,8 +31,6 @@ def getCardanoCliValue(command, key):
         stdout, stderr = process.communicate()
         stdout = stdout.decode("utf-8")
         stderr = stderr.decode("utf-8")
-        print(stdout)
-        print(stderr)
         if process.returncode != 0:
             raise Exception(f'Error calling {command}')
     if not key == '':
@@ -212,10 +211,6 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList, ttlSl
 
     lovelace_to_return = initLovelace - fee - lovelace_to_send
     tokens_to_return = initToken - tokens_to_send
-    print('adaToSend: ', lovelace_to_send)
-    print('tokensToSend: ', tokens_to_send)
-    print('adaToReturn: ', lovelace_to_return)
-    print('tokensToReturn: ', tokens_to_return)
     command = f'cardano-cli transaction build-raw \
                 --fee {fee} '
     for txIn in txInList:
@@ -250,10 +245,8 @@ def submitSignedTx(signed_file='tx', network='mainnet'):
 def sendTokenToAddr(myPaymentAddrSignKeyFile: str, txInList: list, initLovelace: int, initToken: int,
                     fromAddr: str, recipientList: list, tokenPolicyId: str, minFee: int, foreignTokensDict: dict, network='mainnet'):
     ttlSlot = queryTip('slot', network) + 2000
-    print('TTL Slot:', ttlSlot)
     getDraftTX(txInList, fromAddr, recipientList, ttlSlot)
     fee = getMinFee(len(txInList), len(recipientList), network=network)
-    print ('Min fee:', fee)
     getRawTx(txInList, initLovelace, initToken, fromAddr, recipientList, ttlSlot, fee, minFee, tokenPolicyId, foreignTokensDict)
     signTx([myPaymentAddrSignKeyFile], network=network)
     return submitSignedTx(network=network)
@@ -491,6 +484,7 @@ def getPoolId():
 
 
 def verifyPoolIsRegistered(poolId, network='mainnet'):
+    print(f"Verifying that pool {poolId} is registered...")
     command = f'cardano-cli query ledger-state --{network} | grep publicKey | grep {poolId}'
     pubKey = getCardanoCliValue(command, '')
     if "publicKey" in pubKey and poolId in pubKey:
@@ -499,28 +493,52 @@ def verifyPoolIsRegistered(poolId, network='mainnet'):
         return False
 
 
-def buildSendTokensToOneDestinationTx(txInList, change_address, TTL, destination, lovelace_amount, sendDict, returnDict, network='mainnet', era='babbage-era'):
+def buildSendTokensToOneDestinationTx(txInList, change_address, TTL, destination, lovelace_amount_to_send, sendDict, returnDict, network='mainnet', era='babbage-era'):
     print('Building raw Tx for Sending multiple tokens')
-    command = f'cardano-cli transaction build \
-                --{era} \
-                --witness-override 2 '
+    command_build = f'cardano-cli transaction build \
+                    --{era} \
+                    --witness-override 2 '
     i = 1
     for txIn in txInList:
         i=i+1
         if i < 400: # Make sure it fits in one tx
-            command += f'--tx-in {txIn} '
-    command += f'--tx-out {destination}+{lovelace_amount}'
+            command_build += f'--tx-in {txIn} '
+    command_tx_out_destination = f'--tx-out {destination}+'
+    command_tokens_destination = ""
     for token in sendDict:
-        command += f'+"{sendDict[token]} {token}"'
+        command_tokens_destination += f'+"{sendDict[token]} {token}"'
+    if lovelace_amount_to_send == 0:
+          # TODO: Replace 999999999 with 0 when cli is updated to return correct value (On version 8.0.0).
+        lovelace_amount_to_send = getMinRequiredUtxo(era, command_tx_out_destination + "99999999" + command_tokens_destination)
+    else:
+        lovelace_amount_to_send = str(lovelace_amount_to_send)
+
+    command_return_lovelace = ''
     if len(returnDict) > 1:
-        command += f' --tx-out {change_address}+2172240'
+        command_return_lovelace = f' --tx-out {change_address}+'
+    command_return_tokens = ''
     for token in returnDict:
         if returnDict[token] != 0 and token != 'ADA':
-            command += f'+"{returnDict[token]} {token}"'
-    command += f' --change-address {change_address} \
+            command_return_tokens += f'+"{returnDict[token]} {token}"'
+
+    lovelace_for_txout_return_tokens = ''
+    if len(returnDict) > 1:
+        # TODO: Replace 999999999 with 0 when cli is updated to return correct value (On version 8.0.0).
+        lovelace_for_txout_return_tokens = getMinRequiredUtxo(era, command_return_lovelace + "99999999" + command_return_tokens)
+
+    command_change_address = f' --change-address {change_address} \
                 --{network}  \
                 --out-file tx.raw \
                 --invalid-hereafter {TTL}'
+    command = command_build \
+            + command_tx_out_destination \
+            + lovelace_amount_to_send \
+            + command_tokens_destination \
+            + command_return_lovelace \
+            + lovelace_for_txout_return_tokens \
+            + command_return_tokens \
+            + command_change_address
+    print(command)
     getCardanoCliValue(command, '')
 
 
@@ -552,3 +570,20 @@ def getSenderAddressFromSimpleTxHash(txHash_txIx: str, network):
                 --{network} \
                 --out-file rec_utxos.json && cat rec_utxos.json | jq \'.[].address\' '
     return getCardanoCliValue(command, '')
+
+
+def getMinRequiredUtxo(era, txout):
+    print("Getting min required amount of lovelace for tx-out...")
+    getProtocolJson(network='testnet-magic 7')
+    command = f"cardano-cli transaction calculate-min-required-utxo \
+                --protocol-params-file protocol.json \
+                --{era} \
+                {txout}"
+    lovelace_value = getCardanoCliValue(command, '')
+    assert lovelace_value.startswith("Lovelace"), "ERROR: getMinRequiredUtxo did not return Lovelace and amount"
+    lovelace_value = lovelace_value.replace("Lovelace ", "").strip()
+    try:
+        int(lovelace_value)
+    except:
+        assert False, "ERROR: could not get integer for lovelace amount from getMinRequiredUtxo"
+    return lovelace_value

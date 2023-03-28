@@ -1,9 +1,9 @@
 import cardano_cli_helper as cli
 import argparse
 from os.path import exists
-import time
+import copy # For dictionary deepcopy
 
-def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, policyIDList, tokenAmountList, network, era):
+def main(paymentAddrFile, paymentSkeyFile, garbageAddrFile, policyIDToKeepList, network, era):
     if exists(paymentAddrFile):
         with open(paymentAddrFile, 'r') as file:
             paymentAddr = file.read().strip()
@@ -11,29 +11,27 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
         paymentAddr = paymentAddrFile.strip()
 
     assert exists(paymentSkeyFile), "ERROR: Payment skey file does not exist."
-    assert len(policyIDList) == len(tokenAmountList), "ERROR: Policy ID list does not match with Token amount List."
 
-    if exists(recipientAddr): # If it doesn't exist assume it's a valid address
-        with open(recipientAddr, 'r') as file:
-            recipientAddr = file.read().strip()
-    # Create dictionary with tokens to send
-    sendTokensDict = {}
-    for tokenID, tokenAmount in zip(policyIDList, tokenAmountList):
-        sendTokensDict[tokenID] = tokenAmount
+    if exists(garbageAddrFile):
+        with open(garbageAddrFile, 'r') as file:
+            garbageAddr = file.read().strip()
+    else:
+        garbageAddr = garbageAddrFile.strip()
 
     utxos = cli.getAddrUTxOs(paymentAddr, network)
     dictWallet = cli.getTokenListFromTxHash(utxos)
-
-    try:
-        for item in sendTokensDict:
-            dictWallet[item] = dictWallet[item] - sendTokensDict[item]
-    except:
-        assert False, "ERROR: Token amounts not found in wallet"
-
     ttlSlot = cli.queryTip('slot', network) + 1000
 
-    cli.buildSendTokensToOneDestinationTx(utxos, paymentAddr, ttlSlot, recipientAddr,
-                                          lovelace_amount, sendTokensDict, dictWallet, network, era=era)
+    destinationDict = copy.deepcopy(dictWallet)
+    destinationDict.pop("ADA", None)
+    returnDict = {"ADA": dictWallet["ADA"]}
+    for policy in policyIDToKeepList:
+        if policy in dictWallet.keys():
+            destinationDict.pop(policy, None)
+            returnDict[policy] = dictWallet[policy]
+
+    cli.buildSendTokensToOneDestinationTx(utxos, paymentAddr, ttlSlot, garbageAddr,
+                                          0, destinationDict, returnDict, network, era=era)
     cli.signTx([paymentSkeyFile],network=network)
 
     cli.submitSignedTx(network=network)
@@ -41,43 +39,31 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-A', '--payment-addr',
-                    default='/opt/cardano/cnode/priv/wallet/SkepsisCoinWallet/payment.addr',
+                    default = 'payment.addr',
                     dest='payment_addr',
                     help='Provide payment address or location of payment address file.',
                     type=str
                     )
     parser.add_argument('-K', '--payment-skey-file',
-                    default='/opt/cardano/cnode/priv/wallet/SkepsisCoinWallet/payment.skey',
+                    default = 'payment.skey',
                     dest='payment_skey_file',
                     help='Provide location of payment skey file.',
                     type=str
                     )
     parser.add_argument('-D', '--destination',
-                    default='/home/christos/skepsis_withdraw/myYoroi.addr',
+                    default = 'garbage.addr',
                     dest='destination',
                     help='Provide location destination address file or string.',
                     type=str
                     )
-    parser.add_argument('-L', '--amount-lovelace',
-                    default=int(0*10**6),
-                    dest='amount',
-                    help='Provide amount to send in lovelace.',
-                    type=int
-                    )
-    parser.add_argument('-T','--token-policy-id',
+    parser.add_argument('-T','--keep-token-policy-id',
                     default=[],
-                    dest='policyIDList',
+                    dest='keepPolicyIDList',
                     nargs='+',
                     help='List of tokens to send',
                     type=str)
-    parser.add_argument('-M','--token-amount',
-                    default=[],
-                    dest='tokenAmountList',
-                    nargs='+',
-                    help='List of tokens to send',
-                    type=int)
     parser.add_argument('-N', '--network',
-                    default='mainnet',
+                    default='testnet-magic 7',
                     dest='network',
                     help='Provide cardano network.',
                     type=str
@@ -93,8 +79,6 @@ if __name__ == '__main__':
     main(args.payment_addr,
          args.payment_skey_file,
          args.destination,
-         args.amount,
-         args.policyIDList,
-         args.tokenAmountList,
+         args.keepPolicyIDList,
          args.network,
          args.era)

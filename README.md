@@ -27,19 +27,48 @@ In a terminal (Optional: with the virtual environment venv activated (Step 2 of 
 python -m unittest
 
 USAGE:
+To send multiple tokens to a destination:
+```shell
+    python3 sendTokens.py --payment-addr <filepath or cardano address string>
+                          --payment-skey-file <filepath>
+                          --destination <filepath or cardano address string>
+                          --amount-lovelace <integer amount to send in lovelace>
+                          --token-policy-id [Space separated list of token policies to send]
+                          --token-amount [Space separated list of amounts per token policy ID]
+                          --network <mainnet or testnet-magic NNNN etc>
+                          --era Current era (e.g. alonzo-era, babbage-era etc)
+```
+    The script will automatically calculate the (min) amount of ADA for the return utxo of any native tokens.
+    *If you want to send the min amount of ADA to a recipient with native token(s), set amount-lovelace=0.*
+
+To clean an account of all (or most) native tokens:
+```shell
+    python3 cleanAddress.py --payment-addr <filepath or cardano address string>
+                            --payment-skey-file <filepath>
+                            --destination <filepath or cardano address string>
+                            --keep-token-policy-id [Space separated list of token policies to keep]
+                            --network <mainnet or testnet-magic NNNN etc>
+                            --era Current era (e.g. alonzo-era, babbage-era etc)
+```
+    The script will automatically calculate the min amount of ADA to send with the tokens.
+
 To withdraw all pool rewards to a payment address:
+```shell
     python3 withdraw_rewards.py --payment-addr-file <filepath>
                                 --payment-skey-file <filepath>
                                 --stake-addr-file <filepath>
                                 --stake-skey-file <filepath>
                                 --sign / --submit < Signing has to be done without internet connection, submitting with internet connection >
                                                 < Also stake skey has to be removed before submitting >
+```
 
-To send only ADA from payment address to destination:
+To send only ADA from payment address to destination: (Legacy, use sendTokens.py)
+```shell
     python3 sendADA.py --payment-addr-file <filepath>
                        --payment-skey-file <filepath>
                        --destination <filepath or cardano address string>
                        --amount-lovelace <integer amount to send in lovelace>
+```
 
 To send multiple assets and ada to multiple recipients:
     Edit config.json
@@ -61,14 +90,7 @@ To get_delegators_stake.py (Run as a crontab job every epoch):
     Edit config.json
     Run get_delegators_stake.py
 
-To send multiple tokens to a destination:
-    python3 sendTokens.py --payment-addr-file <filepath>
-                          --payment-skey-file <filepath>
-                          --destination <filepath or cardano address string>
-                          --amount-lovelace <integer amount to send in lovelace>
-                          --token-policy-id [Space separated list of token policies]
-                          --token-amount [Space separated list of amounts per token policy ID]
-                          --network <mainnet or testnet-magic NNNN etc>
+
 
 ## Examples:
 
@@ -76,7 +98,7 @@ To send multiple tokens to a destination:
 
 In an empty folder run:
 
-```
+```shell
 python3 /path/to/registerSPO.py \
   --funding-addr-file /path/to/payment.addr \
   --funding-skey-file /path/to/payment.skey \
