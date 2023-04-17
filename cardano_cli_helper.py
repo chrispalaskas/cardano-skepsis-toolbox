@@ -32,14 +32,14 @@ def getCardanoCliValue(command, key):
         stdout = stdout.decode("utf-8")
         stderr = stderr.decode("utf-8")
         if process.returncode != 0:
-            raise Exception(f'Error calling {command}')
+            raise Exception(f'Error calling {command}\n{stderr}')
     if not key == '':
         try:
             result = json.loads(stdout)[key]
             return result
         except:
-            print('Error: Request return not in JSON format or key ', key, ' doesn\'t exist')
-            return(-1)
+            print(f'Request return not in JSON format or key {key} doesn\'t exist')
+            return (-1)
     return stdout
 
 
@@ -268,7 +268,7 @@ def waitForTxReceipt(paymentAddr, tokenPolicyId, myTxHash, utxosOld, network="ma
     myTxHashNew = getTxInWithLargestTokenAmount(utxosNew, tokenPolicyId)
     if myTxHash != myTxHashNew:
         timediff = datetime.now() - now
-        print ('Transaction succesfully recorded on blockchain in ', timediff)
+        print(f'Transaction succesfully recorded on blockchain in {timediff}')
         return True
 
 
@@ -321,8 +321,7 @@ def getSlotsPerKESPeriod(genesisFile='/opt/cardano/cnode/files/mainnet-shelley-g
             KESPeriod = data['slotsPerKESPeriod']
             return KESPeriod
         except Exception as e:
-            print('ERROR: File is not formatted correctly')
-            print(e)
+            print(f'File is not formatted correctly: {e}')
 
 
 def generateStakeKeyPair():
