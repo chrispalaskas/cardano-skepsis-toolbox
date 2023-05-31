@@ -1,9 +1,10 @@
 import cardano_cli_helper as cli
 import argparse
 from os.path import exists
-import time
 
-def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, policyIDList, tokenAmountList, network, era):
+
+def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount,
+         policyIDList, tokenAmountList, network, era):
     if exists(paymentAddrFile):
         with open(paymentAddrFile, 'r') as file:
             paymentAddr = file.read().strip()
@@ -11,9 +12,11 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
         paymentAddr = paymentAddrFile.strip()
 
     assert exists(paymentSkeyFile), "ERROR: Payment skey file does not exist."
-    assert len(policyIDList) == len(tokenAmountList), "ERROR: Policy ID list does not match with Token amount List."
+    assert len(policyIDList) == len(tokenAmountList), \
+        "ERROR: Policy ID list does not match with Token amount List."
 
-    if exists(recipientAddr): # If it doesn't exist assume it's a valid address
+    if exists(recipientAddr):
+        # If it doesn't exist assume it's a valid address
         with open(recipientAddr, 'r') as file:
             recipientAddr = file.read().strip()
     # Create dictionary with tokens to send
@@ -27,16 +30,24 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount, polic
     try:
         for item in sendTokensDict:
             dictWallet[item] = dictWallet[item] - sendTokensDict[item]
-    except:
-        assert False, "ERROR: Token amounts not found in wallet"
+    except Exception as e:
+        assert False, f"ERROR: Token amounts not found in wallet: {e}"
 
     ttlSlot = cli.queryTip('slot', network) + 1000
 
-    cli.buildSendTokensToOneDestinationTx(utxos, paymentAddr, ttlSlot, recipientAddr,
-                                          lovelace_amount, sendTokensDict, dictWallet, network, era=era)
-    cli.signTx([paymentSkeyFile],network=network)
+    txId = cli.buildSendTokensToOneDestinationTx(
+        utxos, paymentAddr, ttlSlot,
+        recipientAddr, lovelace_amount,
+        sendTokensDict, dictWallet,
+        network, era=era
+    )
+    txId = txId.strip()
+    cli.signTx([paymentSkeyFile], network=network)
+    submitted = cli.submitSignedTx(network=network)
+    assert (
+        submitted.strip() == 'Transaction successfully submitted.'
+    ), f"ERROR: Transaction {txId} not submitted successfully"
 
-    cli.submitSignedTx(network=network)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
