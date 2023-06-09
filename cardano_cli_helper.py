@@ -37,8 +37,6 @@ def getCardanoCliValue(command, key):
         stdout, stderr = process.communicate()
         stdout = stdout.decode("utf-8")
         stderr = stderr.decode("utf-8")
-        print(stdout)
-        print(stderr)
         if process.returncode != 0:
             raise Exception(f'Error calling {command}\n{stderr}')
     if not key == '':

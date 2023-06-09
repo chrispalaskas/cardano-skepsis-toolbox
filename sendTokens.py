@@ -51,54 +51,61 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-A', '--payment-addr',
-                    default='/opt/cardano/cnode/priv/wallet/SkepsisCoinWallet/payment.addr',
-                    dest='payment_addr',
-                    help='Provide payment address or location of payment address file.',
-                    type=str
-                    )
-    parser.add_argument('-K', '--payment-skey-file',
-                    default='/opt/cardano/cnode/priv/wallet/SkepsisCoinWallet/payment.skey',
-                    dest='payment_skey_file',
-                    help='Provide location of payment skey file.',
-                    type=str
-                    )
-    parser.add_argument('-D', '--destination',
-                    default='/home/christos/skepsis_withdraw/myYoroi.addr',
-                    dest='destination',
-                    help='Provide location destination address file or string.',
-                    type=str
-                    )
-    parser.add_argument('-L', '--amount-lovelace',
-                    default=int(0*10**6),
-                    dest='amount',
-                    help='Provide amount to send in lovelace.',
-                    type=int
-                    )
-    parser.add_argument('-T','--token-policy-id',
-                    default=[],
-                    dest='policyIDList',
-                    nargs='+',
-                    help='List of tokens to send',
-                    type=str)
-    parser.add_argument('-M','--token-amount',
-                    default=[],
-                    dest='tokenAmountList',
-                    nargs='+',
-                    help='List of tokens to send',
-                    type=int)
-    parser.add_argument('-N', '--network',
-                    default='mainnet',
-                    dest='network',
-                    help='Provide cardano network.',
-                    type=str
-                    )
-    parser.add_argument('-E', '--era',
-                    default='babbage-era',
-                    dest='era',
-                    help='Provide cardano era.',
-                    type=str
-                    )
+    parser.add_argument(
+        '-A', '--payment-addr',
+        default='payment.addr',
+        help='Provide payment address or location of payment address file.',
+        type=str
+        )
+    parser.add_argument(
+        '-K', '--payment-skey-file',
+        default='payment.skey',
+        dest='payment_skey_file',
+        help='Provide location of payment skey file.',
+        type=str
+        )
+    parser.add_argument(
+        '-D', '--destination',
+        default='destination.addr',
+        dest='destination',
+        help='Provide location destination address file or string.',
+        type=str
+        )
+    parser.add_argument(
+        '-L', '--amount-lovelace',
+        default=int(1*10**6),
+        dest='amount',
+        help='Provide amount to send in lovelace.',
+        type=int
+        )
+    parser.add_argument(
+        '-T', '--token-policy-id',
+        default=[],
+        dest='policyIDList',
+        nargs='+',
+        help='List of tokens to send',
+        type=str)
+    parser.add_argument(
+        '-M', '--token-amount',
+        default=[],
+        dest='tokenAmountList',
+        nargs='+',
+        help='List of tokens to send',
+        type=int)
+    parser.add_argument(
+        '-N', '--network',
+        default='testnet-magic 1',
+        dest='network',
+        help='Provide cardano network.',
+        type=str
+        )
+    parser.add_argument(
+        '-E', '--era',
+        default='babbage-era',
+        dest='era',
+        help='Provide cardano era.',
+        type=str
+        )
     args = parser.parse_args()
 
     main(args.payment_addr,

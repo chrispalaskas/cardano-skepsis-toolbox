@@ -26,23 +26,24 @@ def generateMetadataJSON(poolName, ticker, homepage):
     return cli.getHashOfMetadataJSON(filename)
 
 
-def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_amount, pledge_amount, pool_ip, network='mainnet'):
+def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
+         fund_amount, pledge_amount, pool_ip, network='mainnet'):
     if not exists(poolName):
-        print('Nope')
         os.mkdir(poolName)
     else:
         print('Destination folder already exists. Please delete or rename.')
         return
     os.chdir(poolName)
     ticker_pattern = re.search('^[A-Z0-9]+$', poolTicker)
-    if len(poolTicker)<3 or len(poolTicker)>5:
+    if len(poolTicker) < 3 or len(poolTicker) > 5:
         print('ERROR: Ticker should be between 3 and 5 characters')
         exit(-1)
-    if ticker_pattern == None or ticker_pattern.string != poolTicker:
+    if ticker_pattern is None or ticker_pattern.string != poolTicker:
         print('ERROR: Ticker should contain only uppercase letters and digits')
         exit(-1)
-    if fund_amount <= pledge_amount + 4000000: # TODO: be more precise?
-        print('ERROR: Funding will not be enough for pledge and network fees for all operations')
+    if fund_amount <= pledge_amount + 4000000:  # TODO: be more precise?
+        print('ERROR: Funding will not be enough for pledge \
+              and network fees for all operations')
         exit(-1)
     min_amount = 1000000
     working_folder = os.getcwd()
@@ -74,7 +75,9 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
     while lovelace == -1:
         print('Waiting for Tx to get on the blockchain')
         time.sleep(5)
-        lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
+        lovelace, utxos = cli.getLovelaceBalance(
+            paymentAddr, network, onlyAda=True
+            )
     ttlSlot = cli.queryTip('slot', network) + 1000
     cli.buildRegisterCertTx(utxos, ttlSlot, min_amount, network)
     cli.signTx([paymentSkeyFile, 'stake.skey'], network=network)
@@ -83,23 +86,32 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
     while lovelace == newLovelace:
         print('Waiting for Tx to get on the blockchain')
         time.sleep(5)
-        newLovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
+        newLovelace, utxos = cli.getLovelaceBalance(
+            paymentAddr, network, onlyAda=True
+            )
     cli.generateVRFKeyPair()
     cli.generateColdKeys()
     cli.generateKESKeyPair()
     print('Generated keys')
-    slotsPerKESPeriod=86400
-    cli.generateOperationalCertificate(slotsPerKESPeriod=slotsPerKESPeriod, network=network)
+    slotsPerKESPeriod = 86400
+    cli.generateOperationalCertificate(
+        slotsPerKESPeriod=slotsPerKESPeriod, network=network
+        )
     print('Generated certificate')
     metadataHash = generateMetadataJSON(poolName, poolTicker, homepage).strip()
     print('Generated metadata')
     # TODO: post on github gist, generate URL
-    # This URL is wrong but it will show a different address in db-sync to ease identification
+    # This URL is wrong but it will show a different address
+    # in db-sync to ease identification
     metadataURL = f'https://example.com/{poolTicker}'
-    cli.generateStakePoolRegistrationCertificate(pledge_amount, pool_ip, metadataURL, metadataHash, network=network)
+    cli.generateStakePoolRegistrationCertificate(
+        pledge_amount, pool_ip, metadataURL, metadataHash, network=network
+        )
     cli.generateDelegationCertificatePledge()
     print('Generated delegation certificate pledge')
-    lovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
+    lovelace, utxos = cli.getLovelaceBalance(
+        paymentAddr, network, onlyAda=True
+        )
     ttlSlot = cli.queryTip('slot', network) + 1000
     cli.buildPoolAndDelegationCertTx(utxos, ttlSlot, min_amount, network)
     cli.signTx(['payment.skey', 'stake.skey', 'cold.skey'], network=network)
@@ -108,67 +120,82 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage, fund_
     while lovelace == newLovelace:
         print('Waiting for Tx to get on the blockchain')
         time.sleep(5)
-        newLovelace, utxos = cli.getLovelaceBalance(paymentAddr, network, onlyAda=True)
+        newLovelace, utxos = cli.getLovelaceBalance(
+            paymentAddr, network, onlyAda=True
+            )
     poolId = cli.getPoolId().strip()
+    with open('pool_id.txt', 'w') as poolIdFile:
+        poolIdFile.write(poolId)
+
     print('Pool registered:', cli.verifyPoolIsRegistered(poolId, network))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-A', '--funding-addr-file',
-                    dest='funding_addr_file',
-                    help='Provide location of funding address file.',
-                    type=str,
-                    required=True
-                    )
-    parser.add_argument('-K', '--funding-skey-file',
-                    dest='funding_skey_file',
-                    help='Provide location of funding skey file.',
-                    type=str,
-                    required=True
-                    )
-    parser.add_argument('-N', '--network',
-                    default='testnet-magic 9',
-                    dest='network',
-                    help='Provide cardano network.',
-                    type=str
-                    )
-    parser.add_argument('--name',
-                    dest='name',
-                    help='Pool name.',
-                    type=str,
-                    required=True
-                    )
-    parser.add_argument('--ticker',
-                    dest='ticker',
-                    help='Pool ticker. Should be between 3 and 5 uppercase characters or numbers.',
-                    type=str,
-                    required=True
-                    )
-    parser.add_argument('--homepage',
-                    default="https://github.com/chrispalaskas",
-                    dest='homepage',
-                    help='Pool homepage.',
-                    type=str
-                    )
-    parser.add_argument('--fund-amount',
-                    default=3750000000,
-                    dest='fund_amount',
-                    help='Amount to fund the new account with, in lovelace.',
-                    type=int
-                    )
-    parser.add_argument('--pledge-amount',
-                    default=500000000,
-                    dest='pledge_amount',
-                    help='Amount of pledge in lovelace.',
-                    type=int
-                    )
-    parser.add_argument('--pool-ip',
-                    default='0.0.0.0',
-                    dest='pool_ip',
-                    help='IP of pool to register.',
-                    type=str
-                    )
+    parser.add_argument(
+        '-A', '--funding-addr-file',
+        dest='funding_addr_file',
+        help='Provide location of funding address file.',
+        type=str,
+        default='payment.addr'
+        )
+    parser.add_argument(
+        '-K', '--funding-skey-file',
+        dest='funding_skey_file',
+        help='Provide location of funding skey file.',
+        type=str,
+        default='payment.skey'
+        )
+    parser.add_argument(
+        '-N', '--network',
+        default='testnet-magic 1',
+        dest='network',
+        help='Provide cardano network.',
+        type=str
+        )
+    parser.add_argument(
+        '--name',
+        dest='name',
+        help='Pool name.',
+        type=str,
+        default='Skepsis'
+        )
+    parser.add_argument(
+        '--ticker',
+        dest='ticker',
+        help='Pool ticker. Should be between 3 and 5 uppercase \
+            characters or numbers.',
+        type=str,
+        default='ASKP'
+        )
+    parser.add_argument(
+        '--homepage',
+        default="https://github.com/chrispalaskas",
+        dest='homepage',
+        help='Pool homepage.',
+        type=str
+        )
+    parser.add_argument(
+        '--fund-amount',
+        default=3000*10**6,
+        dest='fund_amount',
+        help='Amount to fund the new account with, in lovelace.',
+        type=int
+        )
+    parser.add_argument(
+        '--pledge-amount',
+        default=500*10**6,
+        dest='pledge_amount',
+        help='Amount of pledge in lovelace.',
+        type=int
+        )
+    parser.add_argument(
+        '--pool-ip',
+        default='0.0.0.0',
+        dest='pool_ip',
+        help='IP of pool to register.',
+        type=str
+        )
     args = parser.parse_args()
 
     main(args.funding_addr_file,

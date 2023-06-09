@@ -1,9 +1,11 @@
 import cardano_cli_helper as cli
 import argparse
 from os.path import exists
-import copy # For dictionary deepcopy
+import copy  # For dictionary deepcopy
 
-def main(paymentAddrFile, paymentSkeyFile, garbageAddrFile, policyIDToKeepList, network, era):
+
+def main(paymentAddrFile, paymentSkeyFile, garbageAddrFile,
+         policyIDToKeepList, network, era):
     if exists(paymentAddrFile):
         with open(paymentAddrFile, 'r') as file:
             paymentAddr = file.read().strip()
@@ -30,50 +32,59 @@ def main(paymentAddrFile, paymentSkeyFile, garbageAddrFile, policyIDToKeepList, 
             destinationDict.pop(policy, None)
             returnDict[policy] = dictWallet[policy]
 
-    cli.buildSendTokensToOneDestinationTx(utxos, paymentAddr, ttlSlot, garbageAddr,
-                                          0, destinationDict, returnDict, network, era=era)
-    cli.signTx([paymentSkeyFile],network=network)
+    cli.buildSendTokensToOneDestinationTx(
+        utxos, paymentAddr, ttlSlot, garbageAddr,
+        0, destinationDict, returnDict, network, era=era
+        )
+    cli.signTx([paymentSkeyFile], network=network)
 
     cli.submitSignedTx(network=network)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-A', '--payment-addr',
-                    default = 'payment.addr',
-                    dest='payment_addr',
-                    help='Provide payment address or location of payment address file.',
-                    type=str
-                    )
-    parser.add_argument('-K', '--payment-skey-file',
-                    default = 'payment.skey',
-                    dest='payment_skey_file',
-                    help='Provide location of payment skey file.',
-                    type=str
-                    )
-    parser.add_argument('-D', '--destination',
-                    default = 'garbage.addr',
-                    dest='destination',
-                    help='Provide location destination address file or string.',
-                    type=str
-                    )
-    parser.add_argument('-T','--keep-token-policy-id',
-                    default=[],
-                    dest='keepPolicyIDList',
-                    nargs='+',
-                    help='List of tokens to send',
-                    type=str)
-    parser.add_argument('-N', '--network',
-                    default='testnet-magic 7',
-                    dest='network',
-                    help='Provide cardano network.',
-                    type=str
-                    )
-    parser.add_argument('-E', '--era',
-                    default='babbage-era',
-                    dest='era',
-                    help='Provide cardano era.',
-                    type=str
-                    )
+    parser.add_argument(
+        '-A', '--payment-addr',
+        default='account1.addr',
+        dest='payment_addr',
+        help='Provide payment address or location of payment address file.',
+        type=str
+        )
+    parser.add_argument(
+        '-K', '--payment-skey-file',
+        default='account1.skey',
+        dest='payment_skey_file',
+        help='Provide location of payment skey file.',
+        type=str
+        )
+    parser.add_argument(
+        '-D', '--destination',
+        default='garbage.addr',
+        dest='destination',
+        help='Provide location destination address file or string.',
+        type=str
+        )
+    parser.add_argument(
+        '-T', '--keep-token-policy-id',
+        default=[],
+        dest='keepPolicyIDList',
+        nargs='+',
+        help='List of tokens to send',
+        type=str)
+    parser.add_argument(
+        '-N', '--network',
+        default='testnet-magic 7',
+        dest='network',
+        help='Provide cardano network.',
+        type=str
+        )
+    parser.add_argument(
+        '-E', '--era',
+        default='babbage-era',
+        dest='era',
+        help='Provide cardano era.',
+        type=str
+        )
     args = parser.parse_args()
 
     main(args.payment_addr,
