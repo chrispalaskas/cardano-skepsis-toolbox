@@ -94,37 +94,37 @@ def getAddrUTxOs(addr, network="mainnet", onlyAda=False):
 def getTxInWithLargestTokenAmount(utxosJson, tokenPolicyID):
     tokenMax = 0
     maxTokenTxHash = str
-    for key in utxosJson.keys():
-        for key2 in utxosJson[key]['value'].keys():
-            if key2 == 'lovelace':
+    for utxo in utxosJson.keys():
+        for token_policy in utxosJson[utxo]['value'].keys():
+            if token_policy == 'lovelace':
                 continue
             else:
-                for key3 in utxosJson[key]['value'][key2].keys():
-                    if key2+'.'+key3 == tokenPolicyID:
-                        if tokenMax < utxosJson[key]['value'][key2][key3]:
-                            tokenMax = utxosJson[key]['value'][key2][key3]
-                            maxTokenTxHash = key
+                for token_name in utxosJson[utxo]['value'][token_policy].keys():
+                    if token_policy+'.'+token_name == tokenPolicyID:
+                        if tokenMax < utxosJson[utxo]['value'][token_policy][token_name]:
+                            tokenMax = utxosJson[utxo]['value'][token_policy][token_name]
+                            maxTokenTxHash = utxo
     return maxTokenTxHash
 
 
 def getTokenListFromTxHash(utxosJson):
     print('Getting list of tokens and ADA with amounts...')
     tokensDict = {}
-    for key in utxosJson.keys():
-        for key2 in utxosJson[key]['value'].keys():
-            if key2 == 'lovelace':
+    for utxo in utxosJson.keys():
+        for token_policy in utxosJson[utxo]['value'].keys():
+            if token_policy == 'lovelace':
                 if 'ADA' in tokensDict.keys():
-                    tokensDict['ADA'] += utxosJson[key]['value'][key2]
+                    tokensDict['ADA'] += utxosJson[utxo]['value'][token_policy]
                 else:
-                    tokensDict['ADA'] = utxosJson[key]['value'][key2]
+                    tokensDict['ADA'] = utxosJson[utxo]['value'][token_policy]
             else:
-                for key3 in utxosJson[key]['value'][key2].keys():
-                    if key2+'.'+key3 in tokensDict.keys():
-                        tokensDict[key2+'.'+key3] += \
-                            utxosJson[key]['value'][key2][key3]
+                for token_name in utxosJson[utxo]['value'][token_policy].keys():
+                    if token_policy+'.'+token_name in tokensDict.keys():
+                        tokensDict[token_policy+'.'+token_name] += \
+                            utxosJson[utxo]['value'][token_policy][token_name]
                     else:
-                        tokensDict[key2+'.'+key3] = \
-                            utxosJson[key]['value'][key2][key3]
+                        tokensDict[token_policy+'.'+token_name] = \
+                            utxosJson[utxo]['value'][token_policy][token_name]
     return tokensDict
 
 
