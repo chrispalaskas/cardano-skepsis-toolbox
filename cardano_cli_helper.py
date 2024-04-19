@@ -2,6 +2,7 @@ import json
 from subprocess import PIPE, Popen
 from os.path import exists
 from datetime import datetime
+from itertools import islice
 import os
 import time
 
@@ -69,7 +70,7 @@ def getStakeBalance(stake_addr, network="mainnet"):
     return res[0]['rewardAccountBalance']
 
 
-def getAddrUTxOs(addr, network="mainnet", onlyAda=False):
+def getAddrUTxOs(addr, network="mainnet", utxoLimit = 0, onlyAda=False):
     print('Getting address transactions...')
     outfile = 'utxos.json'
     command = f'cardano-cli query utxo --address {addr} \
@@ -77,6 +78,8 @@ def getAddrUTxOs(addr, network="mainnet", onlyAda=False):
     if getCardanoCliValue(command, '') != -1:
         file = open(outfile)
         utxosJson = json.load(file)
+        if utxoLimit > 0:
+            utxosJson = dict(islice(utxosJson.items(), utxoLimit))
         file.close()
         os.remove(outfile)
         if onlyAda:
@@ -550,9 +553,7 @@ def buildSendTokensToOneDestinationTx(
                     --witness-override 2 '
     i = 1
     for txIn in txInList:
-        i = i + 1
-        if i < 400:  # Make sure it fits in one tx
-            command_build += f'--tx-in {txIn} '
+        command_build += f'--tx-in {txIn} '
     command_tx_out_destination = f'--tx-out {destination}+'
     command_tokens_destination = ""
     for token in sendDict:

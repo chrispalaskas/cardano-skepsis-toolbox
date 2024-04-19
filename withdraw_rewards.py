@@ -12,7 +12,7 @@ def connect(host='http://google.com'):
         return False
 
 
-def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file, is_online=False):
+def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file, network, is_online=False):
     if not is_online:
         if connect():
             print('Please go offline before proceeding to access cold keys.')
@@ -25,18 +25,18 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
             paymentAddr = file.read()
         with open(stake_addr_file) as file:
             stakeAddr = file.read()
-        utxos = cli.getAddrUTxOs(paymentAddr)
+        utxos = cli.getAddrUTxOs(paymentAddr, network=network)
         utxo = list(utxos.keys())[0]
         lovelace = utxos[utxo]['value']['lovelace']
 
-        stake_rewards = cli.getStakeBalance(stakeAddr)
+        stake_rewards = cli.getStakeBalance(stakeAddr, network=network)
         cli.getRawTxStakeWithdraw(utxo, paymentAddr, stakeAddr)
-        minFee = cli.getMinFee(1, 1)
+        minFee = cli.getMinFee(1, 1, network=network)
 
         withdrawal = lovelace - minFee + stake_rewards
 
-        cli.buildRawTxStakeWithdraw(utxo, paymentAddr, withdrawal, stakeAddr, stake_rewards, minFee)
-        cli.signTx([payment_skey_file, stake_skey_file], filename='withdraw_rewards')
+        cli.buildRawTxStakeWithdraw(utxo, paymentAddr, withdrawal, stakeAddr, stake_rewards, minFee, network=network)
+        cli.signTx([payment_skey_file, stake_skey_file], network=network, filename='withdraw_rewards')
     else:
         if exists(stake_skey_file):
             print('Please remove USB stick with keys, before you go online.')
@@ -44,7 +44,7 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
         if not connect():
             print('Please go online to submit transaction.')
             return 0
-        cli.submitSignedTx('withdraw_rewards')
+        cli.submitSignedTx('withdraw_rewards', network=network)
 
 
 
@@ -75,6 +75,13 @@ if __name__ == '__main__':
                     help='Provide location stake skey file.',
                     type=str
                     )
+    parser.add_argument(
+        '-N', '--network',
+        default='testnet-magic 2',
+        dest='network',
+        help='Provide cardano network.',
+        type=str
+        )
     parser.add_argument('--sign', dest='online', action='store_false')
     parser.add_argument('--submit', dest='online', action='store_true')
     # Step 1: Offline, set to False, sign with usb stick.
@@ -85,4 +92,5 @@ if __name__ == '__main__':
          args.payment_skey_file,
          args.stake_addr_file,
          args.stake_skey_file,
+         args.network,
          args.online)

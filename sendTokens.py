@@ -24,7 +24,8 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount,
     for tokenID, tokenAmount in zip(policyIDList, tokenAmountList):
         sendTokensDict[tokenID] = tokenAmount
 
-    utxos = cli.getAddrUTxOs(paymentAddr, network)
+    utxos_limit = 200  # Ensures that the tx can fit in a block
+    utxos = cli.getAddrUTxOs(paymentAddr, network, utxos_limit)
     dictWallet = cli.getTokenListFromTxHash(utxos)
 
     try:
