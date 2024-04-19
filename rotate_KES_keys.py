@@ -36,6 +36,8 @@ def main(kes_vkey_file,
     else:
         print('Certificate generated.')
     # Replace kes.skey and node.cert at your block producer
+    # Store kes.skey, kes.vkey and node.cert on usb stick
+    # Note that the kes.counter will be updated on your usb stick
 
 
 if __name__ == '__main__':

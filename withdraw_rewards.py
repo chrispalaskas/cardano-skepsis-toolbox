@@ -29,7 +29,8 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
         utxo = list(utxos.keys())[0]
         lovelace = utxos[utxo]['value']['lovelace']
 
-        stake_rewards = cli.getStakeBalance(stakeAddr, network=network)
+        stake_rewards = cli.getStakeBalance(stakeAddr)
+        print('Stake rewards: ', stake_rewards)
         cli.getRawTxStakeWithdraw(utxo, paymentAddr, stakeAddr)
         minFee = cli.getMinFee(1, 1, network=network)
 
