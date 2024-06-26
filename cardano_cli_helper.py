@@ -67,7 +67,7 @@ def getLovelaceBalance(addr, network="mainnet", onlyAda=False):
 def getStakeBalance(stake_addr, network="mainnet"):
     command = f'cardano-cli query stake-address-info --cardano-mode \
         --address {stake_addr} --{network}'
-    res = eval(getCardanoCliValue(command, ''))
+    res = json.loads(getCardanoCliValue(command, ''))
     return res[0]['rewardAccountBalance']
 
 
