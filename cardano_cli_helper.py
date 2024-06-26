@@ -6,6 +6,7 @@ from itertools import islice
 import os
 import time
 
+# CARDANO_CLI_PATH = '/home/christos/.local/bin/8.7.3/'
 CARDANO_CLI_PATH = ''
 
 
@@ -564,7 +565,8 @@ def buildSendTokensToOneDestinationTx(
         lovelace_amount_to_send = getMinRequiredUtxo(
             era,
             command_tx_out_destination + "99999999"
-            + command_tokens_destination
+            + command_tokens_destination,
+            network
             )
     else:
         lovelace_amount_to_send = str(lovelace_amount_to_send)
@@ -584,7 +586,8 @@ def buildSendTokensToOneDestinationTx(
         lovelace_for_txout_return_tokens = getMinRequiredUtxo(
             era,
             command_return_lovelace + "99999999"
-            + command_return_tokens
+            + command_return_tokens,
+            network
             )
 
     command_change_address = f' --change-address {change_address} \
@@ -637,9 +640,9 @@ def getSenderAddressFromSimpleTxHash(txHash_txIx: str, network):
     return getCardanoCliValue(command, '')
 
 
-def getMinRequiredUtxo(era, txout):
+def getMinRequiredUtxo(era, txout, network):
     print("Getting min required amount of lovelace for tx-out...")
-    getProtocolJson(network='testnet-magic 7')
+    getProtocolJson(network=network)
     command = f"cardano-cli transaction calculate-min-required-utxo \
                 --protocol-params-file protocol.json \
                 --{era} \
