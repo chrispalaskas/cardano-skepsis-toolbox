@@ -2,9 +2,11 @@ import json
 from subprocess import PIPE, Popen
 from os.path import exists
 from datetime import datetime
+from itertools import islice
 import os
 import time
 
+# CARDANO_CLI_PATH = '/home/christos/.local/bin/8.7.3/'
 CARDANO_CLI_PATH = ''
 
 
@@ -69,7 +71,7 @@ def getStakeBalance(stake_addr, network="mainnet"):
     return res[0]['rewardAccountBalance']
 
 
-def getAddrUTxOs(addr, network="mainnet", onlyAda=False):
+def getAddrUTxOs(addr, network="mainnet", utxoLimit = 0, onlyAda=False):
     print('Getting address transactions...')
     outfile = 'utxos.json'
     command = f'cardano-cli query utxo --address {addr} \
@@ -77,6 +79,8 @@ def getAddrUTxOs(addr, network="mainnet", onlyAda=False):
     if getCardanoCliValue(command, '') != -1:
         file = open(outfile)
         utxosJson = json.load(file)
+        if utxoLimit > 0:
+            utxosJson = dict(islice(utxosJson.items(), utxoLimit))
         file.close()
         os.remove(outfile)
         if onlyAda:
@@ -550,9 +554,7 @@ def buildSendTokensToOneDestinationTx(
                     --witness-override 2 '
     i = 1
     for txIn in txInList:
-        i = i + 1
-        if i < 400:  # Make sure it fits in one tx
-            command_build += f'--tx-in {txIn} '
+        command_build += f'--tx-in {txIn} '
     command_tx_out_destination = f'--tx-out {destination}+'
     command_tokens_destination = ""
     for token in sendDict:
@@ -563,7 +565,8 @@ def buildSendTokensToOneDestinationTx(
         lovelace_amount_to_send = getMinRequiredUtxo(
             era,
             command_tx_out_destination + "99999999"
-            + command_tokens_destination
+            + command_tokens_destination,
+            network
             )
     else:
         lovelace_amount_to_send = str(lovelace_amount_to_send)
@@ -583,7 +586,8 @@ def buildSendTokensToOneDestinationTx(
         lovelace_for_txout_return_tokens = getMinRequiredUtxo(
             era,
             command_return_lovelace + "99999999"
-            + command_return_tokens
+            + command_return_tokens,
+            network
             )
 
     command_change_address = f' --change-address {change_address} \
@@ -636,9 +640,9 @@ def getSenderAddressFromSimpleTxHash(txHash_txIx: str, network):
     return getCardanoCliValue(command, '')
 
 
-def getMinRequiredUtxo(era, txout):
+def getMinRequiredUtxo(era, txout, network):
     print("Getting min required amount of lovelace for tx-out...")
-    getProtocolJson(network='testnet-magic 7')
+    getProtocolJson(network=network)
     command = f"cardano-cli transaction calculate-min-required-utxo \
                 --protocol-params-file protocol.json \
                 --{era} \

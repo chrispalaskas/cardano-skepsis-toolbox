@@ -20,7 +20,9 @@ def main(paymentAddrFile, paymentSkeyFile, garbageAddrFile,
     else:
         garbageAddr = garbageAddrFile.strip()
 
-    utxos = cli.getAddrUTxOs(paymentAddr, network)
+    utxo_limit = 200 # Ensures that the tx can fit in a block
+    # TODO: The number should be better calculated in bytes though
+    utxos = cli.getAddrUTxOs(paymentAddr, network, utxo_limit)
     dictWallet = cli.getTokenListFromTxHash(utxos)
     ttlSlot = cli.queryTip('slot', network) + 1000
 
@@ -38,7 +40,7 @@ def main(paymentAddrFile, paymentSkeyFile, garbageAddrFile,
         )
     cli.signTx([paymentSkeyFile], network=network)
 
-    cli.submitSignedTx(network=network)
+    print(cli.submitSignedTx(network=network))
 
 
 if __name__ == '__main__':
