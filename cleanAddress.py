@@ -82,7 +82,7 @@ if __name__ == '__main__':
         )
     parser.add_argument(
         '-E', '--era',
-        default='babbage-era',
+        default='conway',
         dest='era',
         help='Provide cardano era.',
         type=str

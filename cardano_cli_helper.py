@@ -549,10 +549,8 @@ def buildSendTokensToOneDestinationTx(
         txInList, change_address, TTL, destination, lovelace_amount_to_send,
         sendDict, returnDict, network="mainnet", era='babbage-era'):
     print('Building raw Tx for Sending multiple tokens')
-    command_build = f'cardano-cli transaction build \
-                    --{era} \
+    command_build = f'cardano-cli {era} transaction build \
                     --witness-override 2 '
-    i = 1
     for txIn in txInList:
         command_build += f'--tx-in {txIn} '
     command_tx_out_destination = f'--tx-out {destination}+'
@@ -643,14 +641,13 @@ def getSenderAddressFromSimpleTxHash(txHash_txIx: str, network):
 def getMinRequiredUtxo(era, txout, network):
     print("Getting min required amount of lovelace for tx-out...")
     getProtocolJson(network=network)
-    command = f"cardano-cli transaction calculate-min-required-utxo \
+    command = f"cardano-cli {era} transaction calculate-min-required-utxo \
                 --protocol-params-file protocol.json \
-                --{era} \
                 {txout}"
     lovelace_value = getCardanoCliValue(command, '')
-    assert lovelace_value.startswith("Lovelace"), \
-        "ERROR: getMinRequiredUtxo did not return Lovelace and amount"
-    lovelace_value = lovelace_value.replace("Lovelace ", "").strip()
+    assert lovelace_value.startswith("Coin"), \
+        "ERROR: getMinRequiredUtxo did not return Coin and amount"
+    lovelace_value = lovelace_value.replace("Coin ", "").strip()
     try:
         int(lovelace_value)
     except Exception as e:

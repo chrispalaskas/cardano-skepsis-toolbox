@@ -16,7 +16,7 @@ import re
 def generateMetadataJSON(poolName, ticker, homepage):
     metaData = {
                     "name": poolName,
-                    "description": f"Mamba test pool {poolName}",
+                    "description": f"Partner chains test pool {poolName}",
                     "ticker": ticker,
                     "homepage": homepage
                 }
@@ -137,14 +137,14 @@ if __name__ == '__main__':
         dest='funding_addr_file',
         help='Provide location of funding address file.',
         type=str,
-        default='payment.addr'
+        default='/home/christos/IOHK/Cardano_configs/preprod_run/keys/payment.addr'
         )
     parser.add_argument(
         '-K', '--funding-skey-file',
         dest='funding_skey_file',
         help='Provide location of funding skey file.',
         type=str,
-        default='payment.skey'
+        default='/home/christos/IOHK/Cardano_configs/preprod_run/keys/payment.skey'
         )
     parser.add_argument(
         '-N', '--network',
@@ -158,7 +158,7 @@ if __name__ == '__main__':
         dest='name',
         help='Pool name.',
         type=str,
-        default='Skepsis'
+        default='PC_Staging7'
         )
     parser.add_argument(
         '--ticker',
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         help='Pool ticker. Should be between 3 and 5 uppercase \
             characters or numbers.',
         type=str,
-        default='ASKP'
+        default='PCS7'
         )
     parser.add_argument(
         '--homepage',
@@ -177,9 +177,9 @@ if __name__ == '__main__':
         )
     parser.add_argument(
         '--fund-amount',
-        default=3000*10**6,
+        default=2504*10**6,
         dest='fund_amount',
-        help='Amount to fund the new account with, in lovelace.',
+        help='Amount to fund the new account with, in lovelace. The pledge will be subtracted from this amount.',
         type=int
         )
     parser.add_argument(
