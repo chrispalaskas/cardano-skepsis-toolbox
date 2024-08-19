@@ -95,14 +95,14 @@ if __name__ == '__main__':
         type=int)
     parser.add_argument(
         '-N', '--network',
-        default='testnet-magic 1',
+        default='testnet-magic 2',
         dest='network',
         help='Provide cardano network.',
         type=str
         )
     parser.add_argument(
         '-E', '--era',
-        default='babbage-era',
+        default='conway',
         dest='era',
         help='Provide cardano era.',
         type=str

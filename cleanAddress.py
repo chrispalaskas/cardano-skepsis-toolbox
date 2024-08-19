@@ -75,7 +75,7 @@ if __name__ == '__main__':
         type=str)
     parser.add_argument(
         '-N', '--network',
-        default='testnet-magic 7',
+        default='testnet-magic 2',
         dest='network',
         help='Provide cardano network.',
         type=str
