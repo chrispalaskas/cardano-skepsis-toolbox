@@ -32,7 +32,7 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
         stake_rewards = cli.getStakeBalance(stakeAddr)
         print('Stake rewards: ', stake_rewards)
         cli.getRawTxStakeWithdraw(utxo, paymentAddr, stakeAddr)
-        minFee = cli.getMinFee(1, 1, network=network)
+        minFee = cli.getMinFee(1, 1, 3, network=network)
 
         withdrawal = lovelace - minFee + stake_rewards
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
                     )
     parser.add_argument(
         '-N', '--network',
-        default='testnet-magic 2',
+        default='mainnet',
         dest='network',
         help='Provide cardano network.',
         type=str
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('--submit', dest='online', action='store_true')
     # Step 1: Offline, set to False, sign with usb stick.
     # Step 2: Online, set to True, submit
-    parser.set_defaults(online=False)
+    parser.set_defaults(online=True)
     args = parser.parse_args()
     main(args.payment_addr_file,
          args.payment_skey_file,

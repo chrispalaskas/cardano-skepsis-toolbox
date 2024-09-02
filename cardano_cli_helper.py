@@ -157,10 +157,9 @@ def queryTip(keyword, network="mainnet"):
     return getCardanoCliValue(command, keyword)
 
 
-def getMinFee(txInCnt, txOutCnt, network="mainnet"):
+def getMinFee(txInCnt, txOutCnt, witness_count=1, network="mainnet"):
     print('Getting min fee for transaction...')
     txOutCnt += 1
-    witness_count = 1
     getProtocolJson(network=network)
     command = f'cardano-cli transaction calculate-min-fee \
                                 --tx-body-file tx.tmp \
@@ -351,7 +350,7 @@ def generatePaymentKeyPair():
 
 
 def getSlotsPerKESPeriod(
-        genesisFile='/opt/cardano/cnode/files/mainnet-shelley-genesis.json'
+        genesisFile='/opt/cardano/cnode/files/shelley-genesis.json'
         ):
     if not exists(genesisFile):
         print('ERROR: genesis.json file does not exist.')

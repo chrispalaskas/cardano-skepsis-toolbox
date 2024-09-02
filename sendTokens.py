@@ -54,40 +54,41 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-A', '--payment-addr',
-        default='payment.addr',
+        default='/home/christos/skepsis_withdraw/payment.addr',
+        dest='payment_addr',
         help='Provide payment address or location of payment address file.',
         type=str
         )
     parser.add_argument(
         '-K', '--payment-skey-file',
-        default='payment.skey',
+        default='/home/christos/skepsis_withdraw/payment.skey',
         dest='payment_skey_file',
         help='Provide location of payment skey file.',
         type=str
         )
     parser.add_argument(
         '-D', '--destination',
-        default='destination.addr',
+        default='/home/christos/skepsis_withdraw/myYoroi.addr',
         dest='destination',
         help='Provide location destination address file or string.',
         type=str
         )
     parser.add_argument(
         '-L', '--amount-lovelace',
-        default=int(1*10**6),
+        default=1604*10**6,
         dest='amount',
         help='Provide amount to send in lovelace.',
         type=int
         )
     parser.add_argument(
-        '-T', '--token-policy-id',
+        '-T','--token-policy-id',
         default=[],
         dest='policyIDList',
         nargs='+',
         help='List of tokens to send',
         type=str)
     parser.add_argument(
-        '-M', '--token-amount',
+        '-M','--token-amount',
         default=[],
         dest='tokenAmountList',
         nargs='+',
@@ -95,7 +96,7 @@ if __name__ == '__main__':
         type=int)
     parser.add_argument(
         '-N', '--network',
-        default='testnet-magic 2',
+        default='mainnet',
         dest='network',
         help='Provide cardano network.',
         type=str
