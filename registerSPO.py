@@ -27,7 +27,7 @@ def generateMetadataJSON(poolName, ticker, homepage):
 
 
 def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
-         fund_amount, pledge_amount, pool_ip, network='mainnet'):
+         fund_amount, pledge_amount, pool_ip, network='mainnet', era='conway'):
     if not exists(poolName):
         os.mkdir(poolName)
     else:
@@ -73,7 +73,8 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
         fund_amount,
         [],
         [],
-        network=network)
+        network=network,
+        )
     lovelace = -1
     while lovelace == -1:
         print('Waiting for Tx to get on the blockchain')
@@ -199,6 +200,13 @@ if __name__ == '__main__':
         help='IP of pool to register.',
         type=str
         )
+    parser.add_argument(
+        '-E', '--era',
+        default='conway',
+        dest='era',
+        help='Provide cardano era.',
+        type=str
+        )
     args = parser.parse_args()
 
     main(args.funding_addr_file,
@@ -209,4 +217,5 @@ if __name__ == '__main__':
          args.fund_amount,
          args.pledge_amount,
          args.pool_ip,
-         args.network)
+         args.network,
+         args.era)
