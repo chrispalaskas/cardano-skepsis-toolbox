@@ -60,7 +60,7 @@ def getLovelaceBalance(addr, network="mainnet", onlyAda=False):
         keys = list(utxos.keys())
         return dict['ADA'], keys
     except Exception as e:
-        print(f"ERROR: Couldn not get balance: {e}")
+        print(f"ERROR: Could not get balance: {e}")
         return -1, []
 
 
@@ -409,7 +409,7 @@ def createRegistrationCertificate():
 
 
 def buildRegisterCertTx(utxos, TTL, amount='1000000',
-                        network="mainnet", era='conway-era'):
+                        network="mainnet", era='conway'):
     print('Building raw Tx for Registering Stake certificate')
     txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
     command = f'cardano-cli transaction build \

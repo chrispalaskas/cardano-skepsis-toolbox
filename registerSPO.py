@@ -84,7 +84,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
             paymentAddr, network, onlyAda=True
             )
     ttlSlot = cli.queryTip('slot', network) + 1000
-    cli.buildRegisterCertTx(utxos, ttlSlot, min_amount, network)
+    cli.buildRegisterCertTx(utxos, ttlSlot, min_amount, network, era=era)
     cli.signTx([paymentSkeyFile, 'stake.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
