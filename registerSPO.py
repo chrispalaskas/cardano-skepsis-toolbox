@@ -27,7 +27,7 @@ def generateMetadataJSON(poolName, ticker, homepage):
 
 
 def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
-         fund_amount, pledge_amount, pool_ip, network='mainnet', era='conway'):
+         fund_amount, pledge_amount, pool_ip, network, era):
     if not exists(poolName):
         os.mkdir(poolName)
     else:
@@ -74,6 +74,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
         [],
         [],
         network=network,
+        era=era
         )
     lovelace = -1
     while lovelace == -1:
