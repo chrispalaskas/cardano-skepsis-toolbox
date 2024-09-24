@@ -66,7 +66,7 @@ if __name__ == '__main__':
                     type=str
                     )
     parser.add_argument('-E', '--era',
-                    default='conway-era',
+                    default='conway',
                     dest='era',
                     help='Provide current era.',
                     type=str
