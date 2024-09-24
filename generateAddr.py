@@ -20,8 +20,7 @@ def generateAndFund(fundingAddrFile, fundingSkeyFile, network):
         100*pow(10, 6),
         [],
         [],
-        'testnet-magic 7',
-        'babbage-era')
+        network=network)
 
 
 def generateAccount(network):
@@ -67,7 +66,7 @@ if __name__ == '__main__':
         )
     parser.add_argument(
         '-N', '--network',
-        default='mainnet',
+        default='testnet-magic 42',
         dest='network',
         help='Provide cardano network.',
         type=str

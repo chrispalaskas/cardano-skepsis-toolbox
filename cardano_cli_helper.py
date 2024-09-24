@@ -205,7 +205,7 @@ def getDraftTXSimple(txInList, returnAddr, recipientAddr, ttlSlot):
 
 
 def getRawTxSimple(txInList, returnAddr, recipientAddr, lovelace_amount,
-                   ttlSlot, network, era='babbage-era'):
+                   ttlSlot, network, era='conway-era'):
     print('Creating simple tx.raw...')
     command = f'cardano-cli transaction build --{era} --{network} '
     for txIn in txInList:
@@ -409,7 +409,7 @@ def createRegistrationCertificate():
 
 
 def buildRegisterCertTx(utxos, TTL, amount='1000000',
-                        network="mainnet", era='babbage-era'):
+                        network="mainnet", era='conway-era'):
     print('Building raw Tx for Registering Stake certificate')
     txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
     command = f'cardano-cli transaction build \
@@ -509,7 +509,7 @@ def generateDelegationCertificatePledge():
 
 
 def buildPoolAndDelegationCertTx(utxos, TTL, amount='1000000',
-                                 network="mainnet", era='babbage-era'):
+                                 network="mainnet", era='conway-era'):
     print('Building Tx for generating pool and delegation certificate')
     txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
     command = f'cardano-cli transaction build \
@@ -546,7 +546,7 @@ def verifyPoolIsRegistered(poolId, network="mainnet"):
 
 def buildSendTokensToOneDestinationTx(
         txInList, change_address, TTL, destination, lovelace_amount_to_send,
-        sendDict, returnDict, network="mainnet", era='babbage-era'):
+        sendDict, returnDict, network="mainnet", era='conway-era'):
     print('Building raw Tx for Sending multiple tokens')
     command_build = f'cardano-cli {era} transaction build \
                     --witness-override 2 '
