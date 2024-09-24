@@ -4,7 +4,7 @@
 
 
 import cardano_cli_helper as cli
-import sendADA
+import sendTokens
 import argparse
 from os.path import exists
 import os
@@ -66,11 +66,14 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
     # Fund newly created account
     # TODO: Verify the funding account has enough funds
     print(f'funding address {paymentAddr}')
-    sendADA.main(fundingAddrFile,
-                 fundingSkeyFile,
-                 os.path.join(working_folder, 'payment.addr'),
-                 fund_amount,
-                 network)
+    sendTokens.main(
+        fundingAddrFile,
+        fundingSkeyFile,
+        os.path.join(working_folder, 'payment.addr'),
+        fund_amount,
+        [],
+        [],
+        network=network)
     lovelace = -1
     while lovelace == -1:
         print('Waiting for Tx to get on the blockchain')
