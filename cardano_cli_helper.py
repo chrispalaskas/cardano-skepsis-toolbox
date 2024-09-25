@@ -412,8 +412,7 @@ def buildRegisterCertTx(utxos, TTL, amount='1000000',
                         network="mainnet", era='conway'):
     print('Building raw Tx for Registering Stake certificate')
     txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
-    command = f'cardano-cli transaction build \
-                --{era} \
+    command = f'cardano-cli {era} transaction build \
                 {txIns} \
                 --tx-out $(cat payment.addr)+{amount} \
                 --change-address $(cat payment.addr) \
