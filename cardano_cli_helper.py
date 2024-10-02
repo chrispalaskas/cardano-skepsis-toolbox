@@ -55,9 +55,13 @@ def getLovelaceBalance(addr, network="mainnet", onlyAda=False):
     print('Getting address\' balance in lovelace...')
     try:
         utxos = getAddrUTxOs(addr, network, onlyAda=onlyAda)
-        dict = getTokenListFromTxHash(utxos)
+        tokens_dict = getTokenListFromTxHash(utxos)
         keys = list(utxos.keys())
-        return dict['ADA'], keys
+        if 'ADA' in tokens_dict.keys():
+            return tokens_dict['ADA'], keys
+        elif onlyAda:
+            print("Could not find UTxO with ADA only")
+            return -1, []
     except Exception as e:
         print(f"ERROR: Could not get balance: {e}")
         return -1, []
@@ -70,7 +74,7 @@ def getStakeBalance(stake_addr, network="mainnet"):
     return res[0]['rewardAccountBalance']
 
 
-def getAddrUTxOs(addr, network="mainnet", utxoLimit = 0, onlyAda=False):
+def getAddrUTxOs(addr, network="mainnet", utxoLimit=0, onlyAda=False):
     print('Getting address transactions...')
     outfile = 'utxos.json'
     command = f'cardano-cli query utxo --address {addr} \
