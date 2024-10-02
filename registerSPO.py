@@ -4,7 +4,7 @@
 
 
 import cardano_cli_helper as cli
-import sendADA
+import sendTokens
 import argparse
 from os.path import exists
 import os
@@ -27,7 +27,7 @@ def generateMetadataJSON(poolName, ticker, homepage):
 
 
 def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
-         fund_amount, pledge_amount, pool_ip, network='mainnet'):
+         fund_amount, pledge_amount, pool_ip, network, era):
     if not exists(poolName):
         os.mkdir(poolName)
     else:
@@ -61,16 +61,21 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
         paymentAddr = addr_file.read().strip()
     paymentSkeyFile = 'payment.skey'
     cli.generateStakeAddress(network)
-    cli.createRegistrationCertificate()
+    cli.createRegistrationCertificate(era)
 
     # Fund newly created account
     # TODO: Verify the funding account has enough funds
     print(f'funding address {paymentAddr}')
-    sendADA.main(fundingAddrFile,
-                 fundingSkeyFile,
-                 os.path.join(working_folder, 'payment.addr'),
-                 fund_amount,
-                 network)
+    sendTokens.main(
+        fundingAddrFile,
+        fundingSkeyFile,
+        os.path.join(working_folder, 'payment.addr'),
+        fund_amount,
+        [],
+        [],
+        network=network,
+        era=era
+        )
     lovelace = -1
     while lovelace == -1:
         print('Waiting for Tx to get on the blockchain')
@@ -79,7 +84,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
             paymentAddr, network, onlyAda=True
             )
     ttlSlot = cli.queryTip('slot', network) + 1000
-    cli.buildRegisterCertTx(utxos, ttlSlot, min_amount, network)
+    cli.buildRegisterCertTx(utxos, ttlSlot, min_amount, network, era=era)
     cli.signTx([paymentSkeyFile, 'stake.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
@@ -105,9 +110,9 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
     # in db-sync to ease identification
     metadataURL = f'https://example.com/{poolTicker}'
     cli.generateStakePoolRegistrationCertificate(
-        pledge_amount, pool_ip, metadataURL, metadataHash, network=network
+        pledge_amount, pool_ip, metadataURL, metadataHash, era, network=network
         )
-    cli.generateDelegationCertificatePledge()
+    cli.generateDelegationCertificatePledge(era)
     print('Generated delegation certificate pledge')
     lovelace, utxos = cli.getLovelaceBalance(
         paymentAddr, network, onlyAda=True
@@ -196,6 +201,13 @@ if __name__ == '__main__':
         help='IP of pool to register.',
         type=str
         )
+    parser.add_argument(
+        '-E', '--era',
+        default='conway',
+        dest='era',
+        help='Provide cardano era.',
+        type=str
+        )
     args = parser.parse_args()
 
     main(args.funding_addr_file,
@@ -206,4 +218,5 @@ if __name__ == '__main__':
          args.fund_amount,
          args.pledge_amount,
          args.pool_ip,
-         args.network)
+         args.network,
+         args.era)

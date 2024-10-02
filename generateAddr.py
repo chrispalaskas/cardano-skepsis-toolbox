@@ -20,8 +20,7 @@ def generateAndFund(fundingAddrFile, fundingSkeyFile, network):
         100*pow(10, 6),
         [],
         [],
-        'testnet-magic 7',
-        'babbage-era')
+        network=network)
 
 
 def generateAccount(network):

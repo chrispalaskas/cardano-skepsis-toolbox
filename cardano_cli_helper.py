@@ -6,7 +6,6 @@ from itertools import islice
 import os
 import time
 
-# CARDANO_CLI_PATH = '/home/christos/.local/bin/8.7.3/'
 CARDANO_CLI_PATH = ''
 
 
@@ -56,11 +55,15 @@ def getLovelaceBalance(addr, network="mainnet", onlyAda=False):
     print('Getting address\' balance in lovelace...')
     try:
         utxos = getAddrUTxOs(addr, network, onlyAda=onlyAda)
-        dict = getTokenListFromTxHash(utxos)
+        tokens_dict = getTokenListFromTxHash(utxos)
         keys = list(utxos.keys())
-        return dict['ADA'], keys
+        if 'ADA' in tokens_dict.keys():
+            return tokens_dict['ADA'], keys
+        elif onlyAda:
+            print("Could not find UTxO with ADA only")
+            return -1, []
     except Exception as e:
-        print(f"ERROR: Couldn not get balance: {e}")
+        print(f"ERROR: Could not get balance: {e}")
         return -1, []
 
 
@@ -71,7 +74,7 @@ def getStakeBalance(stake_addr, network="mainnet"):
     return res[0]['rewardAccountBalance']
 
 
-def getAddrUTxOs(addr, network="mainnet", utxoLimit = 0, onlyAda=False):
+def getAddrUTxOs(addr, network="mainnet", utxoLimit=0, onlyAda=False):
     print('Getting address transactions...')
     outfile = 'utxos.json'
     command = f'cardano-cli query utxo --address {addr} \
@@ -205,9 +208,9 @@ def getDraftTXSimple(txInList, returnAddr, recipientAddr, ttlSlot):
 
 
 def getRawTxSimple(txInList, returnAddr, recipientAddr, lovelace_amount,
-                   ttlSlot, network, era='babbage-era'):
+                   ttlSlot, network, era='conway'):
     print('Creating simple tx.raw...')
-    command = f'cardano-cli transaction build --{era} --{network} '
+    command = f'cardano-cli {era} transaction build --{network} '
     for txIn in txInList:
         command += f'--tx-in {txIn} '
     command += f'--tx-out {recipientAddr}+{lovelace_amount} '
@@ -400,20 +403,22 @@ def generateStakeAddress(network="mainnet"):
     getCardanoCliValue(command, '')
 
 
-def createRegistrationCertificate():
+def createRegistrationCertificate(
+        era, key_registration_deposit_amt=2000000, stake_vkey='stake.vkey'
+        ):
     print('Creating registration certificate')
-    command = 'cardano-cli stake-address registration-certificate \
-                --stake-verification-key-file stake.vkey \
+    command = f'cardano-cli {era} stake-address registration-certificate \
+                --key-reg-deposit-amt {key_registration_deposit_amt} \
+                --stake-verification-key-file {stake_vkey} \
                 --out-file stake.cert'
     getCardanoCliValue(command, '')
 
 
 def buildRegisterCertTx(utxos, TTL, amount='1000000',
-                        network="mainnet", era='babbage-era'):
+                        network="mainnet", era='conway'):
     print('Building raw Tx for Registering Stake certificate')
     txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
-    command = f'cardano-cli transaction build \
-                --{era} \
+    command = f'cardano-cli {era} transaction build \
                 {txIns} \
                 --tx-out $(cat payment.addr)+{amount} \
                 --change-address $(cat payment.addr) \
@@ -478,18 +483,20 @@ def getHashOfMetadataJSON(file):
 
 
 def generateStakePoolRegistrationCertificate(
-        pledge, pool_ip, metadata_url, metadata_hash, pool_cost=340000000,
-        pool_margin=0, network="mainnet", pool_port=3533
+        pledge, pool_ip, metadata_url, metadata_hash, era, pool_cost=340000000,
+        pool_margin=0, network="mainnet", pool_port=3533,
+        cold_vkey='cold.vkey', vrf_vkey='vrf.vkey',
+        stake_vkey='stake.vkey'
         ):
     print('Generating stake pool registration certificate')
-    command = f'cardano-cli stake-pool registration-certificate \
-                --cold-verification-key-file cold.vkey \
-                --vrf-verification-key-file vrf.vkey \
+    command = f'cardano-cli {era} stake-pool registration-certificate \
+                --cold-verification-key-file {cold_vkey} \
+                --vrf-verification-key-file {vrf_vkey} \
                 --pool-pledge {pledge} \
                 --pool-cost {pool_cost} \
                 --pool-margin {pool_margin} \
-                --pool-reward-account-verification-key-file stake.vkey \
-                --pool-owner-stake-verification-key-file stake.vkey \
+                --pool-reward-account-verification-key-file {stake_vkey} \
+                --pool-owner-stake-verification-key-file {stake_vkey} \
                 --{network} \
                 --pool-relay-ipv4 {pool_ip} \
                 --pool-relay-port {pool_port} \
@@ -499,21 +506,22 @@ def generateStakePoolRegistrationCertificate(
     getCardanoCliValue(command, '')
 
 
-def generateDelegationCertificatePledge():
+def generateDelegationCertificatePledge(
+        era, stake_vkey='stake.vkey', cold_vkey='cold.vkey'
+        ):
     print('Generating delegation certificate pledge')
-    command = 'cardano-cli stake-address delegation-certificate \
-                --stake-verification-key-file stake.vkey \
-                --cold-verification-key-file cold.vkey \
+    command = f'cardano-cli {era} stake-address stake-delegation-certificate \
+                --stake-verification-key-file {stake_vkey} \
+                --cold-verification-key-file {cold_vkey} \
                 --out-file delegation.cert'
     getCardanoCliValue(command, '')
 
 
 def buildPoolAndDelegationCertTx(utxos, TTL, amount='1000000',
-                                 network="mainnet", era='babbage-era'):
+                                 network="mainnet", era='conway'):
     print('Building Tx for generating pool and delegation certificate')
     txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
-    command = f'cardano-cli transaction build \
-                --{era} \
+    command = f'cardano-cli {era} transaction build \
                 --{network} \
                 --witness-override 3 \
                 {txIns} \
@@ -546,7 +554,7 @@ def verifyPoolIsRegistered(poolId, network="mainnet"):
 
 def buildSendTokensToOneDestinationTx(
         txInList, change_address, TTL, destination, lovelace_amount_to_send,
-        sendDict, returnDict, network="mainnet", era='babbage-era'):
+        sendDict, returnDict, network="mainnet", era='conway'):
     print('Building raw Tx for Sending multiple tokens')
     command_build = f'cardano-cli {era} transaction build \
                     --witness-override 2 '
@@ -607,8 +615,7 @@ def buildSendTokensToOneDestinationTx(
 def buildMintTokensTx(
         network, era, txIn, change_address, destination_addr, lovelace_amount,
         token_amount, token_policy_id, policy_script_file):
-    command = f'cardano-cli transaction build \
-                --{era} \
+    command = f'cardano-cli {era} transaction build \
                 --{network} \
                 --witness-override 2 \
                 --tx-in {txIn} \
