@@ -6,7 +6,6 @@ from itertools import islice
 import os
 import time
 
-# CARDANO_CLI_PATH = '/home/christos/.local/bin/8.7.3/'
 CARDANO_CLI_PATH = ''
 
 
@@ -400,10 +399,13 @@ def generateStakeAddress(network="mainnet"):
     getCardanoCliValue(command, '')
 
 
-def createRegistrationCertificate():
+def createRegistrationCertificate(
+        era, key_registration_deposit_amt=2000000, stake_vkey='stake.vkey'
+        ):
     print('Creating registration certificate')
-    command = 'cardano-cli stake-address registration-certificate \
-                --stake-verification-key-file stake.vkey \
+    command = f'cardano-cli {era} stake-address registration-certificate \
+                --key-reg-deposit-amt {key_registration_deposit_amt} \
+                --stake-verification-key-file {stake_vkey} \
                 --out-file stake.cert'
     getCardanoCliValue(command, '')
 
@@ -477,18 +479,20 @@ def getHashOfMetadataJSON(file):
 
 
 def generateStakePoolRegistrationCertificate(
-        pledge, pool_ip, metadata_url, metadata_hash, pool_cost=340000000,
-        pool_margin=0, network="mainnet", pool_port=3533
+        pledge, pool_ip, metadata_url, metadata_hash, era, pool_cost=340000000,
+        pool_margin=0, network="mainnet", pool_port=3533,
+        cold_vkey='cold.vkey', vrf_vkey='vrf.vkey',
+        stake_vkey='stake.vkey'
         ):
     print('Generating stake pool registration certificate')
-    command = f'cardano-cli stake-pool registration-certificate \
-                --cold-verification-key-file cold.vkey \
-                --vrf-verification-key-file vrf.vkey \
+    command = f'cardano-cli {era} stake-pool registration-certificate \
+                --cold-verification-key-file {cold_vkey} \
+                --vrf-verification-key-file {vrf_vkey} \
                 --pool-pledge {pledge} \
                 --pool-cost {pool_cost} \
                 --pool-margin {pool_margin} \
-                --pool-reward-account-verification-key-file stake.vkey \
-                --pool-owner-stake-verification-key-file stake.vkey \
+                --pool-reward-account-verification-key-file {stake_vkey} \
+                --pool-owner-stake-verification-key-file {stake_vkey} \
                 --{network} \
                 --pool-relay-ipv4 {pool_ip} \
                 --pool-relay-port {pool_port} \
@@ -498,11 +502,13 @@ def generateStakePoolRegistrationCertificate(
     getCardanoCliValue(command, '')
 
 
-def generateDelegationCertificatePledge():
+def generateDelegationCertificatePledge(
+        era, stake_vkey='stake.vkey', cold_vkey='cold.vkey'
+        ):
     print('Generating delegation certificate pledge')
-    command = 'cardano-cli stake-address delegation-certificate \
-                --stake-verification-key-file stake.vkey \
-                --cold-verification-key-file cold.vkey \
+    command = f'cardano-cli {era} stake-address stake-delegation-certificate \
+                --stake-verification-key-file {stake_vkey} \
+                --cold-verification-key-file {cold_vkey} \
                 --out-file delegation.cert'
     getCardanoCliValue(command, '')
 

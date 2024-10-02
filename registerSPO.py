@@ -61,7 +61,7 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
         paymentAddr = addr_file.read().strip()
     paymentSkeyFile = 'payment.skey'
     cli.generateStakeAddress(network)
-    cli.createRegistrationCertificate()
+    cli.createRegistrationCertificate(era)
 
     # Fund newly created account
     # TODO: Verify the funding account has enough funds
@@ -110,9 +110,9 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
     # in db-sync to ease identification
     metadataURL = f'https://example.com/{poolTicker}'
     cli.generateStakePoolRegistrationCertificate(
-        pledge_amount, pool_ip, metadataURL, metadataHash, network=network
+        pledge_amount, pool_ip, metadataURL, metadataHash, era, network=network
         )
-    cli.generateDelegationCertificatePledge()
+    cli.generateDelegationCertificatePledge(era)
     print('Generated delegation certificate pledge')
     lovelace, utxos = cli.getLovelaceBalance(
         paymentAddr, network, onlyAda=True
