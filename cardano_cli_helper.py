@@ -673,3 +673,22 @@ def createDeregistrationCert(epoch_to_retire, era, cold_vkey='cold.vkey'):
                 --epoch {epoch_to_retire} \
                 --out-file pool-deregistration.cert"
     return getCardanoCliValue(command, '')
+
+
+def waitForNextBlock(network):
+    current_block = queryTip("block", network)
+    print(f"Current block is {current_block}")
+    print("Waiting for next block...")
+    next_block = 0
+    while next_block <= current_block:
+        time.sleep(5)
+        next_block = queryTip("block", network)
+    print(f"Next block is {next_block}")
+
+
+def getPoolState(keyword, poolID, network, era):
+    command = f"cardano-cli {era} query pool-state \
+                --{network} \
+                --stake-pool-id {poolID}"
+    poolState = getCardanoCliValue(command, poolID)
+    return poolState[keyword]

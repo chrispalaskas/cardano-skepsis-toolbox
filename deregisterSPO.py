@@ -4,13 +4,24 @@ from os.path import exists
 import os
 
 
-def main(paymentAddrFile, paymentSkeyFile, poolName, retire_epoch,
+def main(paymentAddrFile, paymentSkeyFile, poolName, epoch_to_retire,
          network, era):
     if not exists(poolName):
         print(f"Please place all keys in a folder named {poolName}")
         return
     os.chdir(poolName)
-    cli.createDeregistrationCert(retire_epoch, era)
+    if not exists('cold.skey'):
+        print('ERROR: cold.skey is missing')
+        return
+    if not exists('pool_id.txt'):
+        print('ERROR: pool_id.txt is missing')
+        return
+    if not epoch_to_retire:
+        epoch_to_retire = cli.queryTip("epoch", network) + 2
+        print(f"Epoch to retire pool not provided. Defaulting "
+              f"to {epoch_to_retire}, which is current+2")
+
+    cli.createDeregistrationCert(epoch_to_retire, era)
 
     with open(paymentAddrFile) as addr_file:
         paymentAddr = addr_file.read().strip()
@@ -28,6 +39,17 @@ def main(paymentAddrFile, paymentSkeyFile, poolName, retire_epoch,
         )
     cli.signTx([paymentSkeyFile, 'cold.skey'], network=network)
     cli.submitSignedTx(network=network)
+
+    # Verify the deregistration
+    with open("pool_id.txt") as file:
+        poolId = file.read().strip()
+    cli.waitForNextBlock(network)
+    retire_epoch = cli.getPoolState('retiring', poolId, network, era)
+    assert retire_epoch == epoch_to_retire, (
+        "ERROR: Pool was not deregistered properly. "
+        f"Expected retiring epoch {epoch_to_retire}, got {retire_epoch}"
+    )
+    print(f"Pool will be retired on epoch {retire_epoch}")
 
 
 if __name__ == '__main__':
@@ -65,8 +87,7 @@ if __name__ == '__main__':
         '--epoch-to-retire',
         dest='retire_epoch',
         help='Epoch number when pool should retire. Should be a future value.',
-        type=int,
-        default=710
+        type=int
         )
     parser.add_argument(
         '-N', '--network',
