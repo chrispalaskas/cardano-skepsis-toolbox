@@ -78,18 +78,21 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
         )
     lovelace = -1
     while lovelace == -1:
-        print('Waiting for Tx to get on the blockchain')
+        print('Getting address initial UTxOs')
         time.sleep(5)
         lovelace, utxos = cli.getLovelaceBalance(
             paymentAddr, network, onlyAda=True
             )
     ttlSlot = cli.queryTip('slot', network) + 1000
-    cli.buildRegisterCertTx(utxos, ttlSlot, min_amount, network, era=era)
+    cli.buildCertificateFileListTx(
+        ['stake.cert'], paymentAddr, utxos, ttlSlot, amount=min_amount,
+        network=network, era=era
+        )
     cli.signTx([paymentSkeyFile, 'stake.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
     while lovelace == newLovelace:
-        print('Waiting for Tx to get on the blockchain')
+        print('Waiting for stake certificate Tx to get on the blockchain')
         time.sleep(5)
         newLovelace, utxos = cli.getLovelaceBalance(
             paymentAddr, network, onlyAda=True
@@ -118,12 +121,16 @@ def main(fundingAddrFile, fundingSkeyFile, poolName, poolTicker, homepage,
         paymentAddr, network, onlyAda=True
         )
     ttlSlot = cli.queryTip('slot', network) + 1000
-    cli.buildPoolAndDelegationCertTx(utxos, ttlSlot, min_amount, network)
+    cli.buildCertificateFileListTx(
+        ['pool-registration.cert', 'delegation.cert'], paymentAddr,
+        utxos, ttlSlot, amount=min_amount, network=network, era=era
+        )
     cli.signTx(['payment.skey', 'stake.skey', 'cold.skey'], network=network)
     cli.submitSignedTx(network=network)
     newLovelace = lovelace
     while lovelace == newLovelace:
-        print('Waiting for Tx to get on the blockchain')
+        print('Waiting for pool registration and delegation certificates '
+              'Tx to get on the blockchain')
         time.sleep(5)
         newLovelace, utxos = cli.getLovelaceBalance(
             paymentAddr, network, onlyAda=True

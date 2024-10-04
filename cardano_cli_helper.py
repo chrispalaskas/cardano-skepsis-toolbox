@@ -414,22 +414,6 @@ def createRegistrationCertificate(
     getCardanoCliValue(command, '')
 
 
-def buildRegisterCertTx(utxos, TTL, amount='1000000',
-                        network="mainnet", era='conway'):
-    print('Building raw Tx for Registering Stake certificate')
-    txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
-    command = f'cardano-cli {era} transaction build \
-                {txIns} \
-                --tx-out $(cat payment.addr)+{amount} \
-                --change-address $(cat payment.addr) \
-                --{network}  \
-                --out-file tx.raw \
-                --certificate-file stake.cert \
-                --invalid-hereafter {TTL} \
-                --witness-override 2'
-    getCardanoCliValue(command, '')
-
-
 def generateVRFKeyPair():
     print('Generating VRF key pair')
     command = 'cardano-cli node key-gen-VRF \
@@ -517,19 +501,24 @@ def generateDelegationCertificatePledge(
     getCardanoCliValue(command, '')
 
 
-def buildPoolAndDelegationCertTx(utxos, TTL, amount='1000000',
-                                 network="mainnet", era='conway'):
-    print('Building Tx for generating pool and delegation certificate')
+def buildCertificateFileListTx(
+        certificates_list, payment_addr, utxos, TTL,
+        amount='1000000', network="mainnet", era='conway'
+        ):
+    print("Building Tx for generating "
+          f"{', '.join(certificates_list)} certificate(s)")
     txIns = ' '.join([f'--tx-in {utxo}' for utxo in utxos])
+    certificate_files = ""
+    for cert in certificates_list:
+        certificate_files += f"--certificate-file {cert} "
     command = f'cardano-cli {era} transaction build \
                 --{network} \
-                --witness-override 3 \
+                --witness-override {len(certificates_list)+1} \
                 {txIns} \
-                --tx-out $(cat payment.addr)+{amount} \
-                --change-address $(cat payment.addr) \
+                --tx-out {payment_addr}+{amount} \
+                --change-address {payment_addr} \
                 --invalid-hereafter {TTL} \
-                --certificate-file pool-registration.cert \
-                --certificate-file delegation.cert \
+                {certificate_files} \
                 --out-file tx.raw'
     getCardanoCliValue(command, '')
 
@@ -675,3 +664,31 @@ def getTxId(txFile):
     print("Getting transaction ID")
     command = f"cardano-cli transaction txid --tx-file {txFile}"
     return getCardanoCliValue(command, '')
+
+
+def createDeregistrationCert(epoch_to_retire, era, cold_vkey='cold.vkey'):
+    print(f"Creating deregistration certificate for epoch {epoch_to_retire}")
+    command = f"cardano-cli {era} stake-pool deregistration-certificate \
+                --cold-verification-key-file {cold_vkey} \
+                --epoch {epoch_to_retire} \
+                --out-file pool-deregistration.cert"
+    return getCardanoCliValue(command, '')
+
+
+def waitForNextBlock(network):
+    current_block = queryTip("block", network)
+    print(f"Current block is {current_block}")
+    print("Waiting for next block...")
+    next_block = 0
+    while next_block <= current_block:
+        time.sleep(5)
+        next_block = queryTip("block", network)
+    print(f"Next block is {next_block}")
+
+
+def getPoolState(keyword, poolID, network, era):
+    command = f"cardano-cli {era} query pool-state \
+                --{network} \
+                --stake-pool-id {poolID}"
+    poolState = getCardanoCliValue(command, poolID)
+    return poolState[keyword]
