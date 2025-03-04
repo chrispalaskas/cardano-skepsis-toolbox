@@ -6,7 +6,7 @@ import argparse
 
 def connect(host='http://google.com'):
     try:
-        urllib.request.urlopen(host) #Python 3.x
+        urllib.request.urlopen(host)  # Python 3.x
         return True
     except:
         return False
@@ -46,8 +46,6 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
             print('Please go online to submit transaction.')
             return 0
         cli.submitSignedTx('withdraw_rewards', network=network)
-
-
 
 
 if __name__ == '__main__':

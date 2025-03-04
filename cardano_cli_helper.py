@@ -164,7 +164,7 @@ def getMinFee(txInCnt, txOutCnt, witness_count=1, network="mainnet"):
     print('Getting min fee for transaction...')
     txOutCnt += 1
     getProtocolJson(network=network)
-    command = f'cardano-cli transaction calculate-min-fee \
+    command = f'cardano-cli latest transaction calculate-min-fee \
                                 --tx-body-file tx.tmp \
                                 --tx-in-count {txInCnt} \
                                 --tx-out-count {txOutCnt} \
@@ -178,7 +178,7 @@ def getMinFee(txInCnt, txOutCnt, witness_count=1, network="mainnet"):
 
 def getDraftTX(txInList, returnAddr, recipientList, ttlSlot):
     print('Creating tx.tmp...')
-    command = 'cardano-cli transaction build-raw \
+    command = 'cardano-cli latest transaction build-raw \
                --fee 0 '
     for txIn in txInList:
         command += f'--tx-in {txIn} '
@@ -195,7 +195,7 @@ def getDraftTX(txInList, returnAddr, recipientList, ttlSlot):
 
 def getDraftTXSimple(txInList, returnAddr, recipientAddr, ttlSlot):
     print('Creating simple tx.tmp...')
-    command = 'cardano-cli transaction build-raw \
+    command = 'cardano-cli latest transaction build-raw \
                --fee 0 '
     for txIn in txInList:
         command += f'--tx-in {txIn} '
@@ -237,7 +237,7 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList,
 
     lovelace_to_return = initLovelace - fee - lovelace_to_send
     tokens_to_return = initToken - tokens_to_send
-    command = f'cardano-cli transaction build-raw \
+    command = f'cardano-cli latest transaction build-raw \
                 --fee {fee} '
     for txIn in txInList:
         command += f'--tx-in {txIn} '
@@ -256,7 +256,7 @@ def getRawTx(txInList, initLovelace, initToken, returnAddr, recipientList,
 
 def signTx(signingKeyFileList, network="mainnet", filename='tx'):
     print('Signing Transaction...')
-    command = 'cardano-cli transaction sign '
+    command = 'cardano-cli latest transaction sign '
     for key in signingKeyFileList:
         command += f'--signing-key-file {key} '
     command += f'--tx-body-file {filename}.raw \
@@ -267,7 +267,7 @@ def signTx(signingKeyFileList, network="mainnet", filename='tx'):
 
 def submitSignedTx(signed_file='tx', network="mainnet"):
     print('Submitting Transaction...')
-    command = f'cardano-cli transaction submit \
+    command = f'cardano-cli latest transaction submit \
         --tx-file {signed_file}.signed --{network}'
     return getCardanoCliValue(command, '')
 
@@ -313,7 +313,7 @@ def waitForTxReceipt(paymentAddr, tokenPolicyId, myTxHash,
 
 
 def getRawTxStakeWithdraw(tx_in, payment_addr, stake_addr):
-    command = f'cardano-cli transaction build-raw \
+    command = f'cardano-cli latest transaction build-raw \
                 --tx-in {tx_in} \
                 --tx-out {payment_addr}+0 \
                 --withdrawal {stake_addr}+0 \
@@ -326,7 +326,7 @@ def getRawTxStakeWithdraw(tx_in, payment_addr, stake_addr):
 def buildRawTxStakeWithdraw(tx_in, payment_addr, withdrawal, stake_addr,
                             stake_rewards, minFee, network="mainnet"):
     currentSlot = queryTip('slot', network)
-    command = f'cardano-cli transaction build-raw \
+    command = f'cardano-cli latest transaction build-raw \
                 --tx-in {tx_in} \
                 --tx-out {payment_addr}+{withdrawal} \
                 --withdrawal {stake_addr}+{stake_rewards} \
@@ -662,7 +662,7 @@ def getDelegatedStakeToPool(poolID, network="mainnet"):
 
 def getTxId(txFile):
     print("Getting transaction ID")
-    command = f"cardano-cli transaction txid --tx-file {txFile}"
+    command = f"cardano-cli latest transaction txid --tx-file {txFile}"
     return getCardanoCliValue(command, '')
 
 
