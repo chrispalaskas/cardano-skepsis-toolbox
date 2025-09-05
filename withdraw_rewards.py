@@ -33,7 +33,6 @@ def main(payment_addr_file, payment_skey_file, stake_addr_file, stake_skey_file,
         print('Stake rewards: ', stake_rewards)
         cli.getRawTxStakeWithdraw(utxo, paymentAddr, stakeAddr)
         minFee = cli.getMinFee(1, 1, 3, network=network)
-
         withdrawal = lovelace - minFee + stake_rewards
 
         cli.buildRawTxStakeWithdraw(utxo, paymentAddr, withdrawal, stakeAddr, stake_rewards, minFee, network=network)

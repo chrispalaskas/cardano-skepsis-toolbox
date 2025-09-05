@@ -173,7 +173,12 @@ def getMinFee(txInCnt, txOutCnt, witness_count=1, network="mainnet"):
                                 --byron-witness-count 0 \
                                 --protocol-params-file protocol.json'
     feeString = getCardanoCliValue(command, '')
-    return int(feeString.split(' ')[0])
+    try:
+        # Handle JSON output like: { "fee": 174301 }
+        return json.loads(feeString)['fee']
+    except (json.JSONDecodeError, KeyError):
+        # Fallback for plain string output like: "174301 Lovelace"
+        return int(feeString.split(' ')[0])
 
 
 def getDraftTX(txInList, returnAddr, recipientList, ttlSlot):
