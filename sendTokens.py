@@ -45,9 +45,7 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount,
     txId = txId.strip()
     cli.signTx([paymentSkeyFile], network=network)
     submitted = cli.submitSignedTx(network=network)
-    assert (
-        submitted.strip() == 'Transaction successfully submitted.'
-    ), f"ERROR: Transaction {txId} not submitted successfully"
+    assert 'Transaction successfully submitted' in submitted, f"ERROR: Transaction {txId} not submitted successfully. Message: {submitted}"
 
 
 if __name__ == '__main__':
@@ -75,13 +73,13 @@ if __name__ == '__main__':
         )
     parser.add_argument(
         '-L', '--amount-lovelace',
-        default=1604*10**6,
+        default=1*10**6,
         dest='amount',
         help='Provide amount to send in lovelace.',
         type=int
         )
     parser.add_argument(
-        '-T','--token-policy-id',
+        '-T', '--token-policy-id',
         default=[],
         dest='policyIDList',
         nargs='+',
