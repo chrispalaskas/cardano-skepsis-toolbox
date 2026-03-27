@@ -18,18 +18,21 @@ if __name__ == '__main__':
     parser.add_argument(
         '-n', '--network',
         default='mainnet',
+        metavar='NETWORK',
         help='Provide cardano network.',
         type=str
     )
     parser.add_argument(
         '-s', '--start',
         required=True,
+        metavar='START',
         help='Start index (inclusive).',
         type=int
     )
     parser.add_argument(
         '-e', '--end',
         required=True,
+        metavar='END',
         help='End index (inclusive).',
         type=int
     )
@@ -37,6 +40,7 @@ if __name__ == '__main__':
         '-o', '--output-folder',
         default='generated_addresses',
         dest='output_folder',
+        metavar='FOLDER',
         help='Output folder for generated address files.',
         type=str
     )

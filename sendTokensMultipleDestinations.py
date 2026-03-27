@@ -151,6 +151,7 @@ if __name__ == '__main__':
         '-n', '--network',
         default='mainnet',
         dest='network',
+        metavar='NETWORK',
         help='Provide cardano network (e.g. mainnet, testnet-magic 9).',
         type=str
     )
@@ -158,6 +159,7 @@ if __name__ == '__main__':
         '-a', '--funding-addr',
         required=True,
         dest='funding_addr',
+        metavar='ADDR',
         help='Funding address or path to .addr file.',
         type=str
     )
@@ -165,6 +167,7 @@ if __name__ == '__main__':
         '-k', '--funding-skey-file',
         required=True,
         dest='funding_skey_file',
+        metavar='SKEY',
         help='Path to funding signing key file.',
         type=str
     )
@@ -172,6 +175,7 @@ if __name__ == '__main__':
         '-d', '--destination-list',
         default=None,
         dest='destination_list',
+        metavar='ADDR',
         nargs='+',
         help='List of destination addresses or .addr files.',
         type=str
@@ -180,6 +184,7 @@ if __name__ == '__main__':
         '-f', '--destination-folder',
         default=None,
         dest='destination_folder',
+        metavar='FOLDER',
         help='Folder to scan for *.addr files as destinations.',
         type=str
     )
@@ -187,6 +192,7 @@ if __name__ == '__main__':
         '-l', '--amount-lovelace',
         default=1*10**6,
         dest='lovelace_amount',
+        metavar='LOVELACE',
         help='Amount of lovelace to send to each destination.',
         type=int
     )
@@ -194,6 +200,7 @@ if __name__ == '__main__':
         '-t', '--token-policy-id',
         required=True,
         dest='token_policy_id',
+        metavar='POLICY_ID',
         help='Token policy ID (format: policyId.tokenName).',
         type=str
     )
@@ -201,6 +208,7 @@ if __name__ == '__main__':
         '-m', '--token-amount',
         required=True,
         dest='token_amount',
+        metavar='AMOUNT',
         help='Number of tokens to send to each destination.',
         type=int
     )
@@ -208,6 +216,7 @@ if __name__ == '__main__':
         '-e', '--era',
         default='conway',
         dest='era',
+        metavar='ERA',
         help='Cardano era.',
         type=str
     )

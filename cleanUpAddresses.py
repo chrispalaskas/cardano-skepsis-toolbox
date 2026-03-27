@@ -111,6 +111,7 @@ if __name__ == '__main__':
         '-n', '--network',
         default='mainnet',
         dest='network',
+        metavar='NETWORK',
         help='Provide cardano network (e.g. mainnet, testnet-magic 9).',
         type=str
     )
@@ -118,6 +119,7 @@ if __name__ == '__main__':
         '-s', '--source-list',
         default=None,
         dest='source_list',
+        metavar='ADDR',
         nargs='+',
         help='List of .addr file paths (matching .skey files expected alongside).',
         type=str
@@ -126,6 +128,7 @@ if __name__ == '__main__':
         '-f', '--source-folder',
         default=None,
         dest='source_folder',
+        metavar='FOLDER',
         help='Folder to scan for *.addr files (matching .skey files expected).',
         type=str
     )
@@ -133,6 +136,7 @@ if __name__ == '__main__':
         '-d', '--destination',
         required=True,
         dest='destination',
+        metavar='ADDR',
         help='Destination address or path to .addr file.',
         type=str
     )
@@ -140,6 +144,7 @@ if __name__ == '__main__':
         '-e', '--era',
         default='conway',
         dest='era',
+        metavar='ERA',
         help='Cardano era.',
         type=str
     )
