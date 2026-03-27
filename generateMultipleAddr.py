@@ -16,25 +16,25 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Generate multiple payment addresses.')
     parser.add_argument(
-        '-N', '--network',
+        '-n', '--network',
         default='mainnet',
         help='Provide cardano network.',
         type=str
     )
     parser.add_argument(
-        '-S', '--start',
+        '-s', '--start',
         required=True,
         help='Start index (inclusive).',
         type=int
     )
     parser.add_argument(
-        '-E', '--end',
+        '-e', '--end',
         required=True,
         help='End index (inclusive).',
         type=int
     )
     parser.add_argument(
-        '-O', '--output-folder',
+        '-o', '--output-folder',
         default='generated_addresses',
         dest='output_folder',
         help='Output folder for generated address files.',

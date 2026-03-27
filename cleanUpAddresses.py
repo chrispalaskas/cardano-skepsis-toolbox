@@ -108,14 +108,14 @@ if __name__ == '__main__':
         description='Sweep all funds from multiple source addresses to one destination.'
     )
     parser.add_argument(
-        '-N', '--network',
+        '-n', '--network',
         default='mainnet',
         dest='network',
         help='Provide cardano network (e.g. mainnet, testnet-magic 9).',
         type=str
     )
     parser.add_argument(
-        '-S', '--source-list',
+        '-s', '--source-list',
         default=None,
         dest='source_list',
         nargs='+',
@@ -123,21 +123,21 @@ if __name__ == '__main__':
         type=str
     )
     parser.add_argument(
-        '-F', '--source-folder',
+        '-f', '--source-folder',
         default=None,
         dest='source_folder',
         help='Folder to scan for *.addr files (matching .skey files expected).',
         type=str
     )
     parser.add_argument(
-        '-D', '--destination',
+        '-d', '--destination',
         required=True,
         dest='destination',
         help='Destination address or path to .addr file.',
         type=str
     )
     parser.add_argument(
-        '-E', '--era',
+        '-e', '--era',
         default='conway',
         dest='era',
         help='Cardano era.',

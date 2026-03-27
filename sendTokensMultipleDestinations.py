@@ -148,28 +148,28 @@ if __name__ == '__main__':
         description='Send tokens to multiple destinations in a single transaction.'
     )
     parser.add_argument(
-        '-N', '--network',
+        '-n', '--network',
         default='mainnet',
         dest='network',
         help='Provide cardano network (e.g. mainnet, testnet-magic 9).',
         type=str
     )
     parser.add_argument(
-        '-A', '--funding-addr',
+        '-a', '--funding-addr',
         required=True,
         dest='funding_addr',
         help='Funding address or path to .addr file.',
         type=str
     )
     parser.add_argument(
-        '-K', '--funding-skey-file',
+        '-k', '--funding-skey-file',
         required=True,
         dest='funding_skey_file',
         help='Path to funding signing key file.',
         type=str
     )
     parser.add_argument(
-        '-D', '--destination-list',
+        '-d', '--destination-list',
         default=None,
         dest='destination_list',
         nargs='+',
@@ -177,35 +177,35 @@ if __name__ == '__main__':
         type=str
     )
     parser.add_argument(
-        '-F', '--destination-folder',
+        '-f', '--destination-folder',
         default=None,
         dest='destination_folder',
         help='Folder to scan for *.addr files as destinations.',
         type=str
     )
     parser.add_argument(
-        '-L', '--amount-lovelace',
+        '-l', '--amount-lovelace',
         default=1*10**6,
         dest='lovelace_amount',
         help='Amount of lovelace to send to each destination.',
         type=int
     )
     parser.add_argument(
-        '-T', '--token-policy-id',
+        '-t', '--token-policy-id',
         required=True,
         dest='token_policy_id',
         help='Token policy ID (format: policyId.tokenName).',
         type=str
     )
     parser.add_argument(
-        '-M', '--token-amount',
+        '-m', '--token-amount',
         required=True,
         dest='token_amount',
         help='Number of tokens to send to each destination.',
         type=int
     )
     parser.add_argument(
-        '-E', '--era',
+        '-e', '--era',
         default='conway',
         dest='era',
         help='Cardano era.',
