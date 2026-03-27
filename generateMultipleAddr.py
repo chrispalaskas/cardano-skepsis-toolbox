@@ -1,11 +1,13 @@
 import argparse
+import os
 import generateAddr
 
 
 def main(network, start, end):
+    os.makedirs('generated_addresses', exist_ok=True)
     for i in range(start, end + 1):
-        name = f'payment_{i}'
-        print(f'--- Generating {name} ---')
+        name = os.path.join('generated_addresses', f'payment_{i}')
+        print(f'--- Generating payment_{i} ---')
         generateAddr.generateAccount(network, name)
         print(f'Created {name}.addr, {name}.skey, {name}.vkey')
 
