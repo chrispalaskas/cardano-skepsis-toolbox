@@ -30,29 +30,31 @@ def get_destination_addresses(destination_list, destination_folder):
 
 
 def verify_funds(wallet_tokens, num_destinations, lovelace_per_dest,
-                 token_policy_id, token_amount_per_dest):
+                 token_policy_id=None, token_amount_per_dest=0):
     """Verify the funding address has enough lovelace and tokens."""
     total_lovelace_needed = num_destinations * lovelace_per_dest
-    total_tokens_needed = num_destinations * token_amount_per_dest
 
     available_lovelace = wallet_tokens.get('ADA', 0)
-    available_tokens = wallet_tokens.get(token_policy_id, 0)
 
     print(f"\n--- Fund verification ---")
     print(f"  Destinations:        {num_destinations}")
     print(f"  Lovelace per dest:   {lovelace_per_dest}")
-    print(f"  Tokens per dest:     {token_amount_per_dest}")
     print(f"  Total lovelace needed: {total_lovelace_needed} (+ fees)")
-    print(f"  Total tokens needed:   {total_tokens_needed}")
     print(f"  Available lovelace:    {available_lovelace}")
-    print(f"  Available tokens:      {available_tokens}")
+
+    if token_policy_id and token_amount_per_dest:
+        total_tokens_needed = num_destinations * token_amount_per_dest
+        available_tokens = wallet_tokens.get(token_policy_id, 0)
+        print(f"  Tokens per dest:     {token_amount_per_dest}")
+        print(f"  Total tokens needed:   {total_tokens_needed}")
+        print(f"  Available tokens:      {available_tokens}")
+        assert available_tokens >= total_tokens_needed, \
+            f"ERROR: Not enough tokens. Have {available_tokens}, " \
+            f"need {total_tokens_needed}."
 
     assert available_lovelace > total_lovelace_needed, \
         f"ERROR: Not enough lovelace. Have {available_lovelace}, " \
         f"need {total_lovelace_needed} + fees."
-    assert available_tokens >= total_tokens_needed, \
-        f"ERROR: Not enough tokens. Have {available_tokens}, " \
-        f"need {total_tokens_needed}."
     print("  Funds OK.\n")
 
 
@@ -68,7 +70,9 @@ def build_multi_destination_tx(utxos, funding_addr, destinations,
     # One --tx-out per destination
     for dest_addr in destinations:
         command += f'--tx-out {dest_addr}+{lovelace_amount}'
-        command += f'+"{token_amount} {token_policy_id}" '
+        if token_policy_id and token_amount:
+            command += f'+"{token_amount} {token_policy_id}"'
+        command += ' '
 
     command += f'--change-address {funding_addr} '
     command += f'--invalid-hereafter {ttl} '
@@ -181,7 +185,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-t', '--token-policy-id',
-        required=True,
+        required=False,
         dest='token_policy_id',
         metavar='POLICY_ID',
         help='Token policy ID (format: policyId.tokenName).',
@@ -189,7 +193,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-m', '--token-amount',
-        required=True,
+        required=False,
         dest='token_amount',
         metavar='AMOUNT',
         help='Number of tokens to send to each destination.',
