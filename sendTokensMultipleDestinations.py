@@ -58,8 +58,7 @@ def verify_funds(wallet_tokens, num_destinations, lovelace_per_dest,
 
 def build_multi_destination_tx(utxos, funding_addr, destinations,
                                lovelace_amount, token_policy_id,
-                               token_amount, wallet_tokens,
-                               ttl, network, era):
+                               token_amount, ttl, network, era):
     """Build a tx with 1 input set and N outputs."""
     print('Building multi-destination transaction...')
     command = f'cardano-cli {era} transaction build --{network} '
@@ -70,22 +69,6 @@ def build_multi_destination_tx(utxos, funding_addr, destinations,
     for dest_addr in destinations:
         command += f'--tx-out {dest_addr}+{lovelace_amount}'
         command += f'+"{token_amount} {token_policy_id}" '
-
-    # Return remaining tokens to change address
-    remaining_tokens = wallet_tokens.get(token_policy_id, 0) \
-        - len(destinations) * token_amount
-    if remaining_tokens > 0:
-        command += f'--tx-out {funding_addr}+0'
-        command += f'+"{remaining_tokens} {token_policy_id}" '
-
-    # Any other (foreign) tokens: return them to funding address
-    foreign_tokens = cli.getForeignTokensFromTokenList(wallet_tokens,
-                                                       token_policy_id)
-    if foreign_tokens:
-        command += f'--tx-out {funding_addr}+0'
-        for token_id, amount in foreign_tokens.items():
-            command += f'+"{amount} {token_id}"'
-        command += ' '
 
     command += f'--change-address {funding_addr} '
     command += f'--invalid-hereafter {ttl} '
@@ -128,7 +111,7 @@ def main(funding_addr_input, funding_skey_file, destination_list,
     tx_id = build_multi_destination_tx(
         utxos, funding_addr, destinations,
         lovelace_amount, token_policy_id, token_amount,
-        wallet_tokens, ttl, network, era
+        ttl, network, era
     )
     tx_id = tx_id.strip()
     print(f"Transaction ID: {tx_id}")
