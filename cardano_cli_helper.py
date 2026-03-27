@@ -376,11 +376,11 @@ def getSlotsPerKESPeriod(
             print(f'File is not formatted correctly: {e}')
 
 
-def generateStakeKeyPair():
+def generateStakeKeyPair(name="stake"):
     print('Generating stake key pair...')
-    command = 'cardano-cli stake-address key-gen \
-               --verification-key-file stake.vkey \
-               --signing-key-file stake.skey'
+    command = f'cardano-cli stake-address key-gen \
+               --verification-key-file {name}.vkey \
+               --signing-key-file {name}.skey'
     getCardanoCliValue(command, '')[0]
 
 
@@ -393,12 +393,13 @@ def generatePaymentAddress(network="mainnet", name="payment"):
     getCardanoCliValue(command, '')[0]
 
 
-def generatePaymentAddressForStaking(network="mainnet"):
+def generatePaymentAddressForStaking(network="mainnet", name="payment",
+                                     stake_vkey="stake.vkey"):
     print(f'Generating payment address for {network}')
     command = f'cardano-cli address build \
-                --payment-verification-key-file payment.vkey \
-                --stake-verification-key-file stake.vkey \
-                --out-file payment.addr \
+                --payment-verification-key-file {name}.vkey \
+                --stake-verification-key-file {stake_vkey} \
+                --out-file {name}.addr \
                 --{network}'
     getCardanoCliValue(command, '')[0]
 

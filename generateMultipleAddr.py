@@ -1,15 +1,23 @@
 import argparse
 import os
-import generateAddr
+import cardano_cli_helper as cli
 
 
-def main(network, start, end, output_folder):
+def main(network, start, end, output_folder, with_staking=False):
     os.makedirs(output_folder, exist_ok=True)
     for i in range(start, end + 1):
         name = os.path.join(output_folder, f'payment_{i}')
+        stake_name = os.path.join(output_folder, f'stake_{i}')
         print(f'--- Generating payment_{i} ---')
-        generateAddr.generateAccount(network, name)
-        print(f'Created {name}.addr, {name}.skey, {name}.vkey')
+        cli.generatePaymentKeyPair(name)
+        if with_staking:
+            cli.generateStakeKeyPair(stake_name)
+            cli.generatePaymentAddressForStaking(network, name,
+                                                 f'{stake_name}.vkey')
+            print(f'Created {name}.addr/skey/vkey, {stake_name}.skey/vkey')
+        else:
+            cli.generatePaymentAddress(network, name)
+            print(f'Created {name}.addr, {name}.skey, {name}.vkey')
 
 
 if __name__ == '__main__':
@@ -44,5 +52,13 @@ if __name__ == '__main__':
         help='Output folder for generated address files.',
         type=str
     )
+    parser.add_argument(
+        '--with-staking-key',
+        default=False,
+        dest='with_staking',
+        action='store_true',
+        help='Also generate a stake key pair per address.',
+    )
     args = parser.parse_args()
-    main(args.network, args.start, args.end, args.output_folder)
+    main(args.network, args.start, args.end, args.output_folder,
+         args.with_staking)
