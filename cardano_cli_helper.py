@@ -378,7 +378,7 @@ def getSlotsPerKESPeriod(
 
 def generateStakeKeyPair(name="stake"):
     print('Generating stake key pair...')
-    command = f'cardano-cli stake-address key-gen \
+    command = f'cardano-cli latest stake-address key-gen \
                --verification-key-file {name}.vkey \
                --signing-key-file {name}.skey'
     getCardanoCliValue(command, '')[0]
@@ -406,7 +406,7 @@ def generatePaymentAddressForStaking(network="mainnet", name="payment",
 
 def generateStakeAddress(network="mainnet"):
     print(f'Generating stake address for {network}')
-    command = f'cardano-cli stake-address build \
+    command = f'cardano-cli latest stake-address build \
                 --stake-verification-key-file stake.vkey \
                 --out-file stake.addr \
                 --{network}'
