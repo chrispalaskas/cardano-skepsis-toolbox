@@ -353,11 +353,11 @@ def generateKESkeys():
     getCardanoCliValue(command, '')[0]
 
 
-def generatePaymentKeyPair():
+def generatePaymentKeyPair(name="payment"):
     print('Generating payment key pair...')
-    command = 'cardano-cli address key-gen \
-               --verification-key-file payment.vkey \
-               --signing-key-file payment.skey'
+    command = f'cardano-cli address key-gen \
+               --verification-key-file {name}.vkey \
+               --signing-key-file {name}.skey'
     getCardanoCliValue(command, '')[0]
 
 
@@ -384,11 +384,11 @@ def generateStakeKeyPair():
     getCardanoCliValue(command, '')[0]
 
 
-def generatePaymentAddress(network="mainnet"):
+def generatePaymentAddress(network="mainnet", name="payment"):
     print(f'Generating payment address for {network}')
     command = f'cardano-cli address build \
-                --payment-verification-key-file payment.vkey \
-                --out-file payment.addr \
+                --payment-verification-key-file {name}.vkey \
+                --out-file {name}.addr \
                 --{network}'
     getCardanoCliValue(command, '')[0]
 

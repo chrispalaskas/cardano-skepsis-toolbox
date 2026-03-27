@@ -4,7 +4,7 @@ from os.path import exists
 import sendTokens
 
 
-def generateAndFund(fundingAddrFile, fundingSkeyFile, network):
+def generateAndFund(fundingAddrFile, fundingSkeyFile, network, name='payment'):
     if not exists(fundingAddrFile):
         print('ERROR: Funding address file does not exist.')
         return 0
@@ -12,28 +12,28 @@ def generateAndFund(fundingAddrFile, fundingSkeyFile, network):
         print('ERROR: Funding skey file does not exist.')
         return 0
 
-    generateAccount(network)
+    generateAccount(network, name)
     sendTokens.main(
         fundingAddrFile,
         fundingSkeyFile,
-        'payment.addr',
+        f'{name}.addr',
         100*pow(10, 6),
         [],
         [],
         network=network)
 
 
-def generateAccount(network):
-    cli.generatePaymentKeyPair()
-    cli.generatePaymentAddress(network)
+def generateAccount(network, name='payment'):
+    cli.generatePaymentKeyPair(name)
+    cli.generatePaymentAddress(network, name)
 
 
 def main(withFunding, lovelace_amount, fundingAddrFile,
-         fundingSkeyFile, network='mainnet'):
+         fundingSkeyFile, network='mainnet', name='payment'):
     if withFunding:
-        generateAndFund(fundingAddrFile, fundingSkeyFile, network)
+        generateAndFund(fundingAddrFile, fundingSkeyFile, network, name)
     else:
-        generateAccount(network)
+        generateAccount(network, name)
 
 
 if __name__ == '__main__':
@@ -71,10 +71,18 @@ if __name__ == '__main__':
         help='Provide cardano network.',
         type=str
         )
+    parser.add_argument(
+        '--name',
+        default='payment',
+        dest='name',
+        help='Base name for generated files (default: payment).',
+        type=str
+        )
     args = parser.parse_args()
 
     main(args.with_funding,
          args.lovelace_amount,
          args.funding_addr_file,
          args.funding_skey_file,
-         args.network)
+         args.network,
+         args.name)
