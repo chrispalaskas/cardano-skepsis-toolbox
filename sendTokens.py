@@ -24,6 +24,10 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount,
     for tokenID, tokenAmount in zip(policyIDList, tokenAmountList):
         sendTokensDict[tokenID] = tokenAmount
 
+    send_max = isinstance(lovelace_amount, str) and lovelace_amount.lower() == 'max'
+    if not send_max:
+        lovelace_amount = int(lovelace_amount)
+
     utxos_limit = 200  # Ensures that the tx can fit in a block
     utxos = cli.getAddrUTxOs(paymentAddr, network, utxos_limit)
     dictWallet = cli.getTokenListFromTxHash(utxos)
@@ -36,12 +40,22 @@ def main(paymentAddrFile, paymentSkeyFile, recipientAddr, lovelace_amount,
 
     ttlSlot = cli.queryTip('slot', network) + 1000
 
-    txId = cli.buildSendTokensToOneDestinationTx(
-        utxos, paymentAddr, ttlSlot,
-        recipientAddr, lovelace_amount,
-        sendTokensDict, dictWallet,
-        network, era=era
-    )
+    if send_max:
+        # Send all lovelace: use recipient as change address so
+        # remaining ADA (minus fees) goes to them.
+        txId = cli.buildSendTokensToOneDestinationTx(
+            utxos, recipientAddr, ttlSlot,
+            recipientAddr, 0,
+            sendTokensDict, dictWallet,
+            network, era=era
+        )
+    else:
+        txId = cli.buildSendTokensToOneDestinationTx(
+            utxos, paymentAddr, ttlSlot,
+            recipientAddr, lovelace_amount,
+            sendTokensDict, dictWallet,
+            network, era=era
+        )
     txId = txId.strip()
     cli.signTx([paymentSkeyFile], network=network)
     submitted = cli.submitSignedTx(network=network)
@@ -73,10 +87,10 @@ if __name__ == '__main__':
         )
     parser.add_argument(
         '-L', '--amount-lovelace',
-        default=1*10**6,
+        default='1000000',
         dest='amount',
-        help='Provide amount to send in lovelace.',
-        type=int
+        help='Provide amount to send in lovelace. Use "max" to send all.',
+        type=str
         )
     parser.add_argument(
         '-T', '--token-policy-id',
